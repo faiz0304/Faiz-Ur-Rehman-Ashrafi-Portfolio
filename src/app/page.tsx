@@ -5,8 +5,6 @@ import TheLab from "@/components/TheLab";
 import Ecosystem from "@/components/Ecosystem";
 import Contact from "@/components/Contact";
 import SystemBanner from "@/components/SystemBanner";
-import ResumeOptimizer from "@/components/ResumeOptimizer";
-
 /* ═══════════════════════════════════════════════════════════
    Home Page — Faiz.AI Portfolio
    ═══════════════════════════════════════════════════════════ */
@@ -20,7 +18,6 @@ export default function Home() {
       <TheLab />
       <SystemBanner type="mission" />
       <Ecosystem />
-      <ResumeOptimizer />
       <Contact />
     </main>
   );

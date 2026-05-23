@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
 /* ── Navigation Links ────────────────────────────────────── */
 const navLinks = [
@@ -19,6 +19,17 @@ const navLinks = [
    ═══════════════════════════════════════════════════════════ */
 export default function Navbar() {
   const [activeSection, setActiveSection] = useState("");
+  const [hidden, setHidden] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious();
+    if (previous !== undefined && latest > previous && latest > 150) {
+      setHidden(true);
+    } else if (previous !== undefined && latest < previous) {
+      setHidden(false);
+    }
+  });
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,10 +55,10 @@ export default function Navbar() {
 
   return (
     <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-      className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/60 border-b border-white/5"
+      variants={{ visible: { y: 0 }, hidden: { y: "-100%" } }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="fixed top-0 z-50 w-full backdrop-blur-md bg-background/60 border-b border-white/5"
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-8">
         {/* ── Logo ─────────────────────────────────────────── */}
