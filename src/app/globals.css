@@ -1,26 +1,258 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   NEURAL MINIMALIST — Dark Theme Design Tokens
+   Portfolio: Agentic AI Specialist
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Core CSS Variables ───────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --background: #0A0A0A;
+  --background-secondary: #171717;
+  --background-tertiary: #1E1E1E;
+  --background-elevated: #242424;
+
+  /* Foreground / Text */
+  --foreground: #EDEDED;
+  --foreground-muted: #A0A0A0;
+  --foreground-subtle: #6B6B6B;
+
+  /* Accent — Neon Cyan */
+  --accent: #00F0FF;
+  --accent-hover: #33F5FF;
+  --accent-muted: rgba(0, 240, 255, 0.15);
+  --accent-glow: rgba(0, 240, 255, 0.4);
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(0, 240, 255, 0.3);
+
+  /* Glass / Surface */
+  --glass: rgba(23, 23, 23, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.06);
 }
 
+/* ── Tailwind v4 Theme Tokens ─────────────────────────────── */
 @theme inline {
+  /* Colors */
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
+  --color-background-elevated: var(--background-elevated);
+
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-glow: var(--accent-glow);
+
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+
+  /* Fonts */
+  --font-sans: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-mono: var(--font-fira-code), "Fira Code", "Courier New", monospace;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.6s ease-out forwards;
+  --animate-slide-up: slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-cursor-blink: cursor-blink 1.06s step-end infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(0, 240, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(0, 240, 255, 0.2);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── Global Base Styles ───────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Selection Highlight ──────────────────────────────────── */
+::selection {
+  background-color: var(--accent-muted);
+  color: var(--accent);
+}
+
+/* ── Scrollbar — Minimal Dark ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground-subtle);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ── Utility Classes ──────────────────────────────────────── */
+
+/* Glassmorphism surface */
+.glass-surface {
+  background: var(--glass);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--glass-border);
+}
+
+/* Accent text glow */
+.text-glow {
+  text-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(0, 240, 255, 0.15);
+}
+
+/* Neon underline decoration */
+.neon-underline {
+  position: relative;
+}
+
+.neon-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  border-radius: 1px;
+}
+
+/* Terminal-style code tag */
+.terminal-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-muted);
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Print Protocol — ATS-Safe A4 PDF Export ──────────────── */
+/*
+  Strategy:
+  1. @page  — A4 size, tight margins, no running headers.
+  2. body * — everything hidden; only #printable-resume is visible.
+  3. Strip all dark surfaces: backgrounds → white, colors → black.
+  4. Cards become simple bordered sections; no rounded corners,
+     no shadows, no glows, no backdrop blur.
+  5. Profile picture hidden (strict ATS mode).
+  6. All .no-print elements removed from flow entirely.
+  7. break-inside: avoid on each project block for clean pagination.
+*/
+
+@media print {
+  @page { size: A4; margin: 12mm 15mm; }
+  
+  html, body, main { 
+    background: white !important; 
+    color: black !important; 
+    height: auto !important; 
+    min-height: 0 !important; 
+    overflow: visible !important; 
+  }
+  
+  /* Force background graphics to print if needed, but strip backgrounds from text elements */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* The nuclear option for the black box */
+  .print\:hidden { 
+    display: none !important; 
+    height: 0 !important; 
+    width: 0 !important; 
+    overflow: hidden !important; 
+  }
+}
+
+
+
