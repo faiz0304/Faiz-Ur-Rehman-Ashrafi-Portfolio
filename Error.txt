@@ -1,53 +1,99 @@
-PS D:\Portfolio> npm run dev
+PS D:\Portfolio>
+                 npm run dev
 
 > app@0.1.0 dev
 > next dev
 
 ▲ Next.js 16.2.6 (Turbopack)
 - Local:         http://localhost:3000
-- Network:       http://172.30.192.1:3000
+- Network:       http://192.168.6.100:3000
 - Environments: .env.local
-✓ Ready in 2.2s
-⚠ Slow filesystem detected. The benchmark took 868ms. If D:\Portfolio\.next/dev is a network drive, consider moving it to a local folder.
-See more: https://nextjs.org/docs/app/guides/local-development
+✓ Ready in 731ms
 
- GET /resume 200 in 4.0s (next.js: 980ms, application-code: 3.0s)
-[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+[browser] ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
 
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
+Parsing ecmascript source code failed
 
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+[browser] ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
 
-https://react.dev/link/hydration-mismatch
+Parsing ecmascript source code failed
 
-  ...
-    <PopChild pop={false} isPresent={true} anchorX="left" anchorY="top" root={undefined}>
-      <PopChildMeasure isPresent={true} childRef={{current:null}} sizeRef={{...}} pop={false}>
-        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,y:-8}} transition={{duration:0.35}} ...>
-          <div className="space-y-6" style={{opacity:0}} ref={function useMotionRef.useCallback}>
-            <GlassCard delay={0.05}>
-              <motion.div initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} transition={{duration:0.6, ...}} ...>
-                <div className={"relative..."} style={{opacity:0, ...}} ref={function useMotionRef.useCallback}>
-                  <div>
-                  <div className="flex flex-...">
-                    <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.5, ...}} ...>
-                      <div className="relative m..." style={{opacity:0}} ref={function useMotionRef.useCallback}>
-                        <div className="relative h...">
-                          <div>
-                          <div>
-                          <img>
-                          <ImagePreload>
-                          <img
-+                           src="http://localhost:3000/Faiz-Profile-Pic.png"
--                           src="/Faiz-Profile-Pic.png"
-                            alt="Faiz Ur Rehman Ashrafi"
-                            className="hidden print:block print:w-24 print:h-24 print:rounded-full print:object-cover ..."
-                          >
-                        ...
-                    ...
-            ...
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+[browser] ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
 
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+⨯ ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+
+
+ GET / 500 in 309ms (next.js: 175ms, application-code: 134ms)
+[browser] Uncaught Error: ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+
+
+    at <unknown> (Error: ./src/components/Hero.tsx:258:15)
+    at <unknown> (Error: (./src/components/Hero.tsx:258:15)

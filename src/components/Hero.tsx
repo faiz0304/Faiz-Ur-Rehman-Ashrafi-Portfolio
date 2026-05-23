@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import Typewriter from "@/components/Typewriter";
 import Image from "next/image";
+import Link from "next/link";
 /* ── Neon Cyan 3D Loader Placeholder — shown while WebGL bundle hydrates */
 function NeuralCoreLoader() {
   return (
@@ -248,6 +249,14 @@ export default function Hero() {
               </svg>
               <span className="relative">Deploy Projects</span>
             </a>
+
+            {/* AI Resume CTA */}
+            <Link
+              href="/resume"
+              className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg hover:bg-[#00F0FF]/10 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+            >
+              &gt; GENERATE ATS RESUME
+            </Link>
 
             {/* Secondary CTA */}
             <a

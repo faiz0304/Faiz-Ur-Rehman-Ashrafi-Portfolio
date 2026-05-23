@@ -117,6 +117,12 @@ export default function Navbar() {
         {/* ── CTA — Status Badge ─────────────────────────── */}
         <div className="ml-4 flex items-center justify-end">
           <Link
+            href="/resume"
+            className="px-4 py-1.5 ml-4 text-sm font-mono text-[#00F0FF] border border-[#00F0FF]/50 rounded hover:bg-[#00F0FF]/10 hover:border-[#00F0FF] transition-all flex items-center gap-2"
+          >
+            [ ⚡ AI RESUME ]
+          </Link>
+          <Link
             href="#contact"
             className="group relative hidden sm:inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-mono font-medium text-foreground-muted transition-all duration-300 hover:border-[#00F0FF]/50 hover:text-[#00F0FF]"
           >
