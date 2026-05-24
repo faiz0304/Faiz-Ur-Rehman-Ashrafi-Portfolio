@@ -276,7 +276,7 @@ function VisualProofGallery({ images }: { images: { label: string; src: string }
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } }
   };
 
   return (
@@ -355,8 +355,11 @@ function VisualProofGallery({ images }: { images: { label: string; src: string }
 }
 
 function CredentialCard({ credential, index }: { credential: Credential; index: number }) {
-  const statusStyle = STATUS_STYLES[credential.status];
-  const dotStyle   = STATUS_DOT[credential.status];
+  const baseStatus = credential.status.startsWith("Completed") ? "Completed" 
+                   : credential.status.startsWith("In Progress") ? "In Progress" 
+                   : "Upcoming";
+  const statusStyle = STATUS_STYLES[baseStatus];
+  const dotStyle   = STATUS_DOT[baseStatus];
 
   return (
     <motion.article
