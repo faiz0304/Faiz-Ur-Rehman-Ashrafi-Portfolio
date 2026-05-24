@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { CREDENTIALS_DATA, type Credential } from "@/data/credentialsData";
 
 /* ═══════════════════════════════════════════════════════════
@@ -274,9 +274,13 @@ function VisualProofGallery({ images }: { images: { label: string; src: string }
     }
   };
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } }
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { duration: 0.5, ease: "easeOut" as any } 
+    }
   };
 
   return (
