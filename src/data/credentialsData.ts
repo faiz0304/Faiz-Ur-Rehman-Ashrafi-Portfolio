@@ -455,7 +455,7 @@ export const CREDENTIALS_DATA: Credential[] = [
       courseUrl: "https://panaversity.org/courses/AI-50"
     },
     images: {
-      logo: "/images/institutes-logo/piaic-logo.png"
+      logo: "/images/institutes-logo/panaveristy-p-logo.png"
     },
     leadership: {
       name: "Sir Zia Khan",
