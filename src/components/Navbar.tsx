@@ -37,6 +37,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [activeSection, setActiveSection] = useState("");
   const [hidden, setHidden] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -165,14 +166,45 @@ export default function Navbar() {
 
           {/* ── Mobile Menu Toggle (Only visible on small screens) ── */}
           <button
-            className="flex flex-col gap-1.5 sm:hidden ml-4"
+            className="flex flex-col gap-1.5 sm:hidden ml-4 p-2"
             aria-label="Toggle menu"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <span className="h-px w-5 bg-foreground-muted transition-colors hover:bg-accent" />
-            <span className="h-px w-3.5 bg-foreground-muted transition-colors hover:bg-accent" />
+            <span className={`h-px w-5 bg-foreground-muted transition-all duration-300 ${isMobileMenuOpen ? "rotate-45 translate-y-1.5 bg-[#00F0FF]" : "hover:bg-accent"}`} />
+            <span className={`h-px w-3.5 bg-foreground-muted transition-all duration-300 ${isMobileMenuOpen ? "opacity-0" : "hover:bg-accent"}`} />
+            <span className={`h-px w-5 bg-foreground-muted transition-all duration-300 ${isMobileMenuOpen ? "-rotate-45 -translate-y-1.5 bg-[#00F0FF]" : "hidden"}`} />
           </button>
         </div>
       </nav>
+
+      {/* ── Mobile Dropdown Menu ── */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden absolute top-full left-0 w-full bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10 flex flex-col p-4 shadow-xl z-50">
+          <ul className="flex flex-col gap-2">
+            {navLinks.map((link) => {
+              const isActive = isLinkActive(link);
+              return (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      block rounded-md px-4 py-3 font-mono text-sm font-medium transition-all duration-300
+                      ${
+                        isActive
+                          ? "text-[#00F0FF] bg-[#00F0FF]/10 border-l-2 border-[#00F0FF]"
+                          : "text-foreground-muted hover:text-foreground hover:bg-white/5 border-l-2 border-transparent"
+                      }
+                    `}
+                  >
+                    {isActive ? `> ${link.label}` : link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </motion.header>
   );
 }
