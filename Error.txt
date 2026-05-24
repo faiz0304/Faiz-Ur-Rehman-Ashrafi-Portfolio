@@ -1,5 +1,4 @@
-PS D:\Portfolio>
-                 npm run dev
+PS D:\Portfolio> npm run dev
 
 > app@0.1.0 dev
 > next dev
@@ -8,8 +7,40 @@ PS D:\Portfolio>
 - Local:         http://localhost:3000
 - Network:       http://192.168.6.100:3000
 - Environments: .env.local
-✓ Ready in 731ms
+✓ Ready in 448ms
 
+[browser] ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
+[browser] ./src/components/Hero.tsx:258:15
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
+  257 |             >
+> 258 |               > GENERATE ATS RESUME
+      |               ^
+  259 |             </Link>
+  260 |
+  261 |             {/* Secondary CTA */}
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/Hero.tsx
+    ./src/app/page.tsx
 [browser] ./src/components/Hero.tsx:258:15
 Unexpected token. Did you mean `{'>'}` or `&gt;`?
   256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...
@@ -76,7 +107,7 @@ Import trace:
     ./src/app/page.tsx
 
 
- GET / 500 in 309ms (next.js: 175ms, application-code: 134ms)
+ GET / 500 in 332ms (next.js: 177ms, application-code: 155ms)
 [browser] Uncaught Error: ./src/components/Hero.tsx:258:15
 Unexpected token. Did you mean `{'>'}` or `&gt;`?
   256 |               className="px-7 py-3.5 font-mono text-sm border-2 border-[#00F0FF] text-[#00F0FF] rounded-lg ho...

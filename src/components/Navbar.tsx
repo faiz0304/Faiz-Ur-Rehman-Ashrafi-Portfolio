@@ -2,22 +2,39 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
-/* ── Navigation Links ────────────────────────────────────── */
-const navLinks = [
-  { label: "ABOUT", href: "#about" },
-  { label: "SKILLS", href: "#skills" },
-  { label: "THE LAB", href: "#lab" },
-  { label: "ARCHIVE", href: "#archive" },
-  { label: "ECOSYSTEM", href: "#ecosystem" },
-  { label: "CONTACT", href: "#contact" },
+/* ── Navigation link shape ───────────────────────────────── */
+type NavLink = { label: string; href: string };
+
+/* ── Anchor links (scroll-spy via IntersectionObserver) ──── */
+const anchorLinks: NavLink[] = [
+  { label: "ABOUT",     href: "/#about" },
+  { label: "SKILLS",    href: "/#skills" },
+  { label: "THE LAB",   href: "/#lab" },
+  { label: "ARCHIVE",   href: "/#archive" },
+  { label: "ECOSYSTEM", href: "/#ecosystem" },
+  { label: "CONTACT",   href: "/#contact" },
+];
+
+/* ── Route links (pathname-based active state) ────────────── */
+const routeLinks: NavLink[] = [
+  { label: "ACADEMY", href: "/credentials" },
+];
+
+/* ── Combined ordered list for rendering ─────────────────── */
+const navLinks: NavLink[] = [
+  ...anchorLinks.slice(0, 3),   // ABOUT · SKILLS · THE LAB
+  routeLinks[0],                 // ACADEMY  ← inserted after THE LAB
+  ...anchorLinks.slice(3),       // ARCHIVE · ECOSYSTEM · CONTACT
 ];
 
 /* ═══════════════════════════════════════════════════════════
    Navbar — Command Navigator
    ═══════════════════════════════════════════════════════════ */
 export default function Navbar() {
+  const pathname = usePathname();
   const [activeSection, setActiveSection] = useState("");
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
@@ -31,6 +48,7 @@ export default function Navbar() {
     }
   });
 
+  /* Scroll-spy — only observe anchor-based sections */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -41,17 +59,29 @@ export default function Navbar() {
         });
       },
       {
-        rootMargin: "-20% 0px -70% 0px", // Trigger when the section reaches upper part of viewport
+        rootMargin: "-20% 0px -70% 0px",
       }
     );
 
-    navLinks.forEach((link) => {
-      const el = document.getElementById(link.href.substring(1));
+    anchorLinks.forEach((link) => {
+      const sectionId = link.href.split("#")[1]; // "/#about" → "about"
+      const el = document.getElementById(sectionId);
       if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
   }, []);
+
+  /* Derive active state for any link type */
+  const isLinkActive = (link: NavLink): boolean => {
+    if (link.href.startsWith("/") && !link.href.includes("#")) {
+      /* Pure route link — match by pathname */
+      return pathname === link.href || pathname.startsWith(link.href + "/");
+    }
+    /* Anchor link — match by scroll-spy section ID */
+    const sectionId = link.href.split("#")[1] ?? "";
+    return activeSection === sectionId;
+  };
 
   return (
     <motion.header
@@ -78,7 +108,7 @@ export default function Navbar() {
         <div className="hidden flex-1 items-center justify-center overflow-x-auto sm:flex lg:overflow-visible">
           <ul className="flex items-center gap-2">
             {navLinks.map((link) => {
-              const isActive = activeSection === link.href.substring(1);
+              const isActive = isLinkActive(link);
 
               return (
                 <li key={link.label}>
@@ -95,7 +125,7 @@ export default function Navbar() {
                   >
                     {isActive ? `> ${link.label}` : link.label}
 
-                    {/* Active indicator underline */}
+                    {/* Active indicator underline — shared layoutId animates between items */}
                     {isActive && (
                       <motion.span
                         layoutId="nav-active"
