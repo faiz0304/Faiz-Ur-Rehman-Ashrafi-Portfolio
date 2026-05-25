@@ -33,14 +33,16 @@ export interface CourseLinks {
   verification?: string;
   facebook?: string;
   courseUrl?: string;
+  location?: string;
 }
 
 export interface Leadership {
   name: string;
   roles: string[];
-  awards: string[];
-  linkedIn: string;
-  photo: string;
+  awards?: string[];
+  linkedIn?: string;
+  photo?: string;
+  bio?: string;
 }
 
 export interface Quarter {
@@ -82,6 +84,17 @@ export interface Resources {
   podcast?: string;
 }
 
+export interface GpaRecord {
+  semester: string;
+  term: string;
+  gpa: number;
+}
+
+export interface AcademicTerm {
+  term: string;
+  courses: string[];
+}
+
 export interface Credential {
   title: string;
   institute: string;
@@ -91,9 +104,12 @@ export interface Credential {
   status: "Completed" | "In Progress" | "Upcoming" | string;
   certification?: string;
   hackathon?: string;
+  cgpa?: string;
+  awards?: string[];
   links: CourseLinks;
   images: CourseImages;
-  instructors: Instructor[];
+  instructors?: Instructor[];
+  faculty?: Instructor[];
   modules?: Module[];
   assignments?: Assignment[];
   tools?: string[];
@@ -105,11 +121,65 @@ export interface Credential {
   quarters?: Quarter[];
   exams?: Exam[];
   resources?: Resources;
+  gpaRecords?: GpaRecord[];
+  academicTerms?: AcademicTerm[];
 }
 
 // ── Data ─────────────────────────────────────────────────────
 
 export const CREDENTIALS_DATA: Credential[] = [
+  /* ── BS Electronics Engineering Technology — Indus University ── */
+  {
+    "title": "BS Electronics Engineering Technology",
+    "institute": "Indus University",
+    "campus": "Gulshan-e-Iqbal, Karachi",
+    "duration": "4 Years (Spring 2022 - Fall 2025)",
+    "status": "Graduated",
+    "cgpa": "3.96",
+    "awards": ["Gold Medalist (1st in Family)"],
+    "links": {
+      "instituteWeb": "https://www.indus.edu.pk/",
+      "instituteLinkedIn": "https://www.linkedin.com/school/indus-university-khi/",
+      "location": "https://www.google.com/maps/place/Indus+University/@24.897793,67.0798734,17z/data=!4m6!3m5!1s0x3eb33ed99b197d7d:0xf77ba28a91dce806!8m2!3d24.897793!4d67.0798734!16s%2Fm%2F0bs5qq_?entry=ttu&g_ep=EgoyMDI2MDUyMC4wIKXMDSoASAFQAw%3D%3D"
+    },
+    "images": {
+      "logo": "/images/institutes-logo/indus-university-logo.png"
+    },
+    "leadership": {
+      "name": "Khalid Amin Sheikh",
+      "roles": ["Chancellor & Chairman Board of Governor"],
+      "photo": "/images/instructors/Chancellor-Khalid-Amin-Sheikh-Prof-Pic.png",
+      "bio": "Serving since 2012. Nominated as Justice of Peace (1996-1999) & Honorary Executive First Class Magistrate."
+    },
+    "faculty": [
+      {
+        "name": "Prof. Dr. Engr. Ahmed Muddassir Khan",
+        "designation": "Dean: Faculty of Engineering, Science and Technology",
+        "photo": "/images/instructors/Prof.-Dr.-Engr.-Ahmed-Muddassir-Khan-Prof-Pic.png",
+        "linkedIn": "https://www.linkedin.com/in/dr-ahmed-muddassir-khan-4335761a/"
+      }
+    ],
+    "gpaRecords": [
+      { "semester": "1st", "term": "Spring-2022", "gpa": 3.96 },
+      { "semester": "2nd", "term": "Fall-2022", "gpa": 4.0 },
+      { "semester": "3rd", "term": "Spring-2023", "gpa": 4.0 },
+      { "semester": "4th", "term": "Fall-2023", "gpa": 3.93 },
+      { "semester": "5th", "term": "Spring-2024", "gpa": 3.87 },
+      { "semester": "6th", "term": "Fall-2024", "gpa": 4.0 },
+      { "semester": "7th", "term": "Spring-2025", "gpa": 3.95 },
+      { "semester": "8th", "term": "Fall-2025", "gpa": 4.0 }
+    ],
+    "academicTerms": [
+      { "term": "Fall-2025", "courses": ["Supervised Industrial Training - II"] },
+      { "term": "Spring-2025", "courses": ["Final Year Project - II", "Supervised Industrial Training - I"] },
+      { "term": "Fall-2024", "courses": ["Communication Networks", "Communication Networks (Lab)", "FPGA Based Systems", "FPGA Based Systems (Lab)", "Final Year Project - I", "Industrial Automation and Robotics", "Industrial Automation and Robotics (Lab)", "Project Management"] },
+      { "term": "Spring-2024", "courses": ["Applied Antenna and Wave Propagation", "Applied Antenna and Wave Propagation (Lab)", "Industrial Drives", "Industrial Drives (Lab)", "Industrial Electronics and Applications", "Industrial Electronics and Applications (Lab)", "Renewable Energy Technology", "Renewable Energy Technology (Lab)", "VLSI Technology", "VLSI Technology (Lab)"] },
+      { "term": "Fall-2023", "courses": ["Amplifier and Oscillators", "Amplifier and Oscillators (Lab)", "Communication Systems and Techniques", "Communication Systems and Techniques (Lab)", "Control Technology", "Control Technology (Lab)", "Electromagnetic Field Theory", "Power Electronics", "Power Electronics (Lab)", "Technical Report Writing"] },
+      { "term": "Spring-2023", "courses": ["Communication Skills", "Electrical Technology-II", "Electrical Technology-II (Lab)", "Electronic Devices and Technology", "Electronic Devices and Technology (Lab)", "Instrumentation and Measurement", "Instrumentation and Measurement (Lab)", "Microprocessors", "Microprocessors (Lab)"] },
+      { "term": "Fall-2022", "courses": ["Applied Mathematics-II", "Computer Programming", "Computer Programming (Lab)", "Digital Logic Technology", "Digital Logic Technology (Lab)", "Electrical Technology-I", "Electrical Technology-I (Lab)", "PCB Design and Fabrication Workshop (Lab)", "Pakistan Studies"] },
+      { "term": "Spring-2022", "courses": ["Applied Mathematics-I", "Applied Physics", "Applied Physics (Lab)", "Electrical Circuit Analysis", "Electrical Circuit Analysis (Lab)", "Electronics Workshop Practice (Lab)", "Introduction to Computer Fundamentals", "Introduction to Computer Fundamentals (Lab)", "Islamic Studies/Professional Ethics"] }
+    ]
+  },
   /* ── Agentic AI — S.M.I.T ───────────────────────────────── */
   {
     title: "Agentic AI",

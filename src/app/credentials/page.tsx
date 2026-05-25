@@ -489,6 +489,19 @@ function CredentialCard({ credential, index }: { credential: Credential; index: 
                   {credential.campus}
                   <ExternalLinkIcon className="h-2.5 w-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-60" />
                 </Link>
+              ) : credential.links?.location ? (
+                <a
+                  href={credential.links.location}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group hover:text-cyan-400 transition-colors cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1 font-mono text-[11px] text-foreground-muted hover:border-[#00F0FF]/30 hover:bg-[#00F0FF]/[0.04]"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3 w-3 shrink-0 text-[#00F0FF]/50" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+                  </svg>
+                  {credential.campus}
+                  <ExternalLinkIcon className="h-2.5 w-2.5 opacity-60" />
+                </a>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1 font-mono text-[11px] text-foreground-muted">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3 w-3 shrink-0 text-[#00F0FF]/50" aria-hidden="true">
@@ -509,6 +522,20 @@ function CredentialCard({ credential, index }: { credential: Credential; index: 
                 </span>
               )}
             </div>
+
+            {/* CGPA & Awards */}
+            {credential.cgpa && (
+              <div className="mt-3 flex flex-wrap gap-3">
+                <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded font-bold">
+                  CGPA: {credential.cgpa}
+                </span>
+                {credential.awards?.map((award: string) => (
+                  <span key={award} className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 text-xs font-mono rounded flex items-center gap-2 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                    🏆 {award}
+                  </span>
+                ))}
+              </div>
+            )}
             
             {/* 1. Certification & Verification Badge */}
             {credential.certification && (
@@ -550,39 +577,104 @@ function CredentialCard({ credential, index }: { credential: Credential; index: 
               <div>
                 <h5 className="font-bold text-white flex items-center gap-2">
                   {credential.leadership.name}
-                  <a href={credential.leadership.linkedIn} target="_blank" rel="noopener noreferrer" className="text-blue-400">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                  </a>
+                  {credential.leadership.linkedIn && (
+                    <a href={credential.leadership.linkedIn} target="_blank" rel="noopener noreferrer" className="text-blue-400">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    </a>
+                  )}
                 </h5>
                 <p className="text-xs text-gray-400 mb-2">{credential.leadership.roles.join(" | ")}</p>
-                <div className="flex flex-wrap gap-1">
-                  {credential.leadership.awards.map(award => (
-                    <span key={award} className="text-[9px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 rounded uppercase tracking-wider">{award}</span>
-                  ))}
-                </div>
+                {credential.leadership.bio && <p className="text-[10px] text-gray-400 mt-2 italic border-l-2 border-gray-700 pl-2">{credential.leadership.bio}</p>}
+                {credential.leadership.awards && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {credential.leadership.awards.map(award => (
+                      <span key={award} className="text-[9px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 rounded uppercase tracking-wider">{award}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ══ 2. MENTORS & ARCHITECTS ═════════════════════ */}
+        {/* ══ 2. MENTORS & ARCHITECTS / FACULTY ════════════ */}
         <div>
-          <CardSectionLabel label="Mentors & Architects" />
+          {credential.instructors && credential.instructors.length > 0 && (
+            <>
+              <CardSectionLabel label="Mentors & Architects" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {credential.instructors.map((instructor) => (
+                  <InstructorNode
+                    key={instructor.name}
+                    name={instructor.name}
+                    linkedIn={instructor.linkedIn}
+                    photo={instructor.photo}
+                    designation={instructor.designation}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {credential.instructors.map((instructor) => (
-              <InstructorNode
-                key={instructor.name}
-                name={instructor.name}
-                linkedIn={instructor.linkedIn}
-                photo={instructor.photo}
-                designation={instructor.designation}
-              />
-            ))}
-          </div>
+          {credential.faculty && credential.faculty.length > 0 && (
+            <div className={credential.instructors ? "mt-6" : ""}>
+              <CardSectionLabel label="Faculty" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {credential.faculty.map((member: any, idx: number) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-[#0A0A0A] rounded border border-gray-800">
+                    <img src={member.photo} alt={member.name} className="w-12 h-12 rounded-full border border-gray-600 object-cover" />
+                    <div>
+                      <h5 className="text-sm text-gray-200 font-semibold leading-tight">{member.name}</h5>
+                      <div className="text-[10px] text-gray-500 font-mono mt-1">{member.designation}</div>
+                      {member.linkedIn && <a href={member.linkedIn} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 inline-block">🔗 LinkedIn</a>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
+          {credential.gpaRecords && (
+            <div className="mt-8">
+              <h4 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-3">// ACADEMIC PERFORMANCE (GPA)</h4>
+              <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg">
+                {credential.gpaRecords.map((record: any) => (
+                  <div key={record.term} className="flex items-center gap-3">
+                    <div className="w-24 text-[10px] text-gray-400 font-mono">{record.term}</div>
+                    <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${(record.gpa / 4) * 100}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full bg-cyan-400"
+                      ></motion.div>
+                    </div>
+                    <div className="w-8 text-xs text-cyan-400 font-bold text-right">{record.gpa.toFixed(2)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          
+          {credential.academicTerms && (
+            <div className="mt-8">
+              <h4 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-3">// COMPLETED COURSEWORK</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {credential.academicTerms.map((term: any) => (
+                  <div key={term.term} className="p-3 bg-[#0A0A0A] border border-gray-800 rounded">
+                    <div className="text-cyan-400 font-mono text-[10px] mb-2 border-b border-gray-800 pb-1">{term.term}</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {term.courses.map((c: string, i: number) => (
+                        <span key={i} className="text-[9px] px-1.5 py-0.5 bg-gray-900 border border-gray-700 text-gray-400 rounded">{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 2. Render Tools & Strategies */}
           {credential.tools && (
             <div className="mt-6">
