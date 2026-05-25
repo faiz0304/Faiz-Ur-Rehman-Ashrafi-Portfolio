@@ -134,7 +134,7 @@ export const CREDENTIALS_DATA: Credential[] = [
       {
         name: "Sir Muhammad Danial Siddiqui",
         linkedIn: "https://www.linkedin.com/in/muhammaddanialsiddiqui/",
-        photo: "/images/instructors/SIr-Muhammad-Danial-Siddiqui-Prof-Pic.png",
+        photo: "/images/instructors/Sir-Muhammad-Danial-Siddiqui-Prof-Pic.png",
       },
       {
         name: "Sir Abu Bakar",
