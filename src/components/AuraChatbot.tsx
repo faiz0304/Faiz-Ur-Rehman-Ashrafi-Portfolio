@@ -25,23 +25,40 @@ export default function AuraChatbot() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [lastScrolledId, setLastScrolledId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // useChat from @ai-sdk/react abstracts the Chat object.
   // In this SDK version, UI form state is decoupled.
   const [input, setInput] = useState("");
-  const { messages, status, sendMessage } = useChat({
+  const { messages, status, sendMessage, setMessages } = useChat({
     // @ts-ignore: initialMessages not recognized in this AI SDK version
     initialMessages: [
       {
         id: "init",
         role: "assistant",
-        content: "System initialized. Aura Neural Assistant online. How can I help you?",
         parts: [{ type: "text", text: "System initialized. Aura Neural Assistant online. How can I help you?" }]
       },
     ],
   });
 
   const isLoading = status === "streaming" || status === "submitted";
+
+  const handleReset = () => {
+    setMessages([
+      {
+        id: "init",
+        role: "assistant",
+        parts: [{ type: "text", text: "System initialized. Aura Neural Assistant online. How can I help you?" }]
+      }
+    ]);
+  };
+
+  // Focus input when isLoading transitions from true to false (finished answering) or when chat window opens
+  useEffect(() => {
+    if (!isLoading && isOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value);
 
@@ -241,14 +258,25 @@ export default function AuraChatbot() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-foreground-subtle transition-colors hover:text-accent"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleReset}
+                  title="Reset conversation"
+                  className="text-foreground-subtle transition-colors hover:text-accent"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-foreground-subtle transition-colors hover:text-accent"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs sm:text-sm">
@@ -321,6 +349,7 @@ export default function AuraChatbot() {
                 <div className="relative flex items-center">
                   <span className="absolute left-3 font-bold text-accent">{">"}</span>
                   <input
+                    ref={inputRef}
                     type="text"
                     value={input}
                     onChange={handleInputChange}
