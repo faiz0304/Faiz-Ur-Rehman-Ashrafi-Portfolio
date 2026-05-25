@@ -132,9 +132,9 @@ export const CREDENTIALS_DATA: Credential[] = [
 
     instructors: [
       {
-        name: "Sir Muhammad Danial Siddique",
+        name: "Sir Muhammad Danial Siddiqui",
         linkedIn: "https://www.linkedin.com/in/muhammaddanialsiddiqui/",
-        photo: "/images/instructors/SIr-Muhammad-Danial-Siddique-Prof-Pic.png",
+        photo: "/images/instructors/SIr-Muhammad-Danial-Siddiqui-Prof-Pic.png",
       },
       {
         name: "Sir Abu Bakar",

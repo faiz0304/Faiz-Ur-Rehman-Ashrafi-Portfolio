@@ -218,7 +218,7 @@ function InstructorNode({
   designation?: string;
 }) {
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#1E1E1E] px-4 py-3 transition-all duration-300 hover:border-[#00F0FF]/20 hover:bg-[#242424] hover:shadow-[0_0_20px_rgba(0,240,255,0.04)]">
+    <div className="group flex items-start sm:items-center gap-3 rounded-xl border border-white/[0.06] bg-[#1E1E1E] px-4 py-3 transition-all duration-300 hover:border-[#00F0FF]/20 hover:bg-[#242424] hover:shadow-[0_0_20px_rgba(0,240,255,0.04)]">
       {/* Avatar ring */}
       <div className="relative shrink-0">
         <div className="absolute -inset-[2px] rounded-full bg-gradient-to-br from-[#00F0FF]/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -235,7 +235,7 @@ function InstructorNode({
 
       {/* Name + LinkedIn */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+        <p className="text-sm sm:text-base whitespace-normal break-words font-medium text-foreground">{name}</p>
         {designation && (
           <div className="text-[10px] text-gray-500 font-mono mt-1">{designation}</div>
         )}
