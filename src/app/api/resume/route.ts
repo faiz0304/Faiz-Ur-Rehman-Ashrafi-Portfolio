@@ -1,88 +1,232 @@
 import { createGroq } from "@ai-sdk/groq";
-import { streamText, createTextStreamResponse } from "ai";
+import { generateText } from "ai";
 import { FAIZ_RESUME_DATA } from "@/data/resumeData";
+import type { TemplateId, StreamChunk } from "@/components/resume-templates/index";
 
-/* ── Allow streaming responses up to 30 seconds ──────────── */
-export const maxDuration = 30;
+/* ── Allow up to 60 seconds for JSON generation ────────────── */
+export const maxDuration = 60;
+
+/* ── Helper: emit a newline-delimited JSON chunk ────────────── */
+function encodeChunk(obj: StreamChunk): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify(obj) + "\n");
+}
+
+/* ── Helper: non-blocking delay ─────────────────────────────── */
+function delay(ms: number) {
+  return new Promise<void>((res) => setTimeout(res, ms));
+}
 
 /* ─────────────────────────────────────────────────────────────
-   System prompt injected with the full immutable profile data.
-   The model may tailor ordering/emphasis but MUST NOT invent.
+   System prompt — instructs the model to output structured JSON
+   with a selected template, reason, and full resume payload.
    ─────────────────────────────────────────────────────────────*/
-function buildSystemPrompt(): string {
-  const { basics, summary, education, technicalSkills, projects, strengths } =
+function buildSystemPrompt(templateId: TemplateId | "auto"): string {
+  const { basics, summary, education, technicalSkills, projects, strengths, continuousLearning } =
     FAIZ_RESUME_DATA;
 
   const profilePayload = JSON.stringify(
-    { basics, summary, education, technicalSkills, projects, strengths },
+    { basics, summary, education, technicalSkills, projects, strengths, continuousLearning },
     null,
     2,
   );
 
-  return `
-You are an elite ATS-Optimization Agent. You have been provided with Faiz Ur Rehman Ashrafi's immutable career data (FAIZ_RESUME_DATA). You are strictly forbidden from inventing, hallucinating, or assuming any skills, degrees, or experiences not explicitly present in this JSON.
+  const templateInstruction =
+    templateId === "auto"
+      ? `TEMPLATE SELECTION: Analyze the job description and pick the BEST template from the 5 options. Use your judgment about the role's industry, seniority, and company culture.`
+      : `TEMPLATE SELECTION: The user has manually selected "${templateId}". Use this template. Still write a templateReason explaining why it is a good fit.`;
 
-════════════════════════════════════════════
-VERIFIED PROFILE DATA  (Source of Truth)
-════════════════════════════════════════════
+  return `
+You are an expert Resume Architect and ATS Optimization Agent.
+
+════════════════════════════════════════════════════
+VERIFIED PROFILE DATA  (Immutable Source of Truth)
+════════════════════════════════════════════════════
 ${profilePayload}
 
-════════════════════════════════════════════
+════════════════════════════════════════════════════
+AVAILABLE TEMPLATES
+════════════════════════════════════════════════════
+- "minimalist"  → Corporate, finance, legal. Clean, white, ATS-safe, single-column.
+- "agentic"     → AI/ML, DevOps, cybersecurity, startups. Dark cyber aesthetic, terminal-style.
+- "modern"      → SWE, product, UX. Two-column, structured, violet/indigo accents.
+- "vibe"        → Creative tech, design-adjacent, seed-stage startups. Bold gradient, high-impact.
+- "academic"    → Research, PhDs, faculty, data science R&D. Formal LaTeX-inspired CV.
+
+${templateInstruction}
+
+════════════════════════════════════════════════════
 YOUR TASK
-════════════════════════════════════════════
-Analyze the user-provided Job Description (JD). Your task is to rewrite Faiz's Professional Summary and reorder/highlight his Project bullet points to directly mirror the vocabulary, tone, and priorities of the JD.
+════════════════════════════════════════════════════
+1. Analyze the target job description.
+2. Select the best template (or confirm the user's choice).
+3. Rewrite the Professional Summary to directly mirror the JD's vocabulary, tone, and priorities.
+4. Reorder projects to put the most JD-relevant ones first.
+5. Reorder technicalSkills arrays to highlight the most JD-relevant skills first.
+6. Keep ALL other fields (basics, education, strengths, continuousLearning) EXACTLY as provided.
 
-════════════════════════════════════════════
+════════════════════════════════════════════════════
 STRICT RULES
-════════════════════════════════════════════
-RULE 1  The Immutable Rule: You are strictly forbidden from inventing, hallucinating, or assuming any skills, degrees, or experiences not explicitly present in this JSON.
+════════════════════════════════════════════════════
+RULE 1 — Immutability: NEVER invent, hallucinate, or assume any skill, degree, or experience not in the profile.
+RULE 2 — Basics: Keep name, email, location, linkedin, github, profilePicture EXACTLY as provided.
+RULE 3 — Output Format: Return ONLY a single valid JSON object. No markdown. No code fences. No preamble. No trailing text.
+RULE 4 — JSON Schema: Your output MUST exactly match this shape:
 
-RULE 2  The Optimization Directive: Analyze the user-provided Job Description (JD). Your task is to rewrite Faiz's Professional Summary and reorder/highlight his Project bullet points to directly mirror the vocabulary, tone, and priorities of the JD.
-
-RULE 3  The Skill Matrix Alignment: If the JD asks for Python and LangChain, ensure those tags are moved to the front of his Skills section and explicitly mentioned in the summary.
-
-RULE 4  Format Constraints: Output MUST be in clean, structural Markdown (using H1, H2, bullet points, and bold text). Do not include conversational filler like "Here is your resume." Start immediately with his Name and Title.
+{
+  "template": "<one of: minimalist | agentic | modern | vibe | academic>",
+  "templateReason": "<1-2 sentences: why this template is the optimal choice for this specific job>",
+  "resumeData": {
+    "basics": { "name": "...", "title": "...", "email": "...", "linkedin": "...", "github": "...", "location": "...", "profilePicture": "..." },
+    "summary": "<rewritten summary — 3-5 sentences, JD-optimised, no fabrication>",
+    "education": [ { "degree": "...", "institution": "...", "year": "...", "gpa": "...", "honors": "...", "detail": "..." } ],
+    "technicalSkills": {
+      "programmingAndData": [...],
+      "databases": [...],
+      "frameworks": [...],
+      "aiAndMl": [...],
+      "engineering": [...],
+      "tools": [...]
+    },
+    "projects": [
+      {
+        "name": "...",
+        "title": "...",
+        "description": "<refined for JD — still factual>",
+        "githubLink": "...",
+        "techStack": [...],
+        "tags": [...]
+      }
+    ],
+    "strengths": [ { "trait": "...", "detail": "..." } ],
+    "continuousLearning": [...]
+  }
+}
 `.trim();
 }
 
 /* ── POST /api/resume ───────────────────────────────────────── */
 export async function POST(req: Request) {
-  try {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "[Resume API] GROQ_API_KEY is not configured." }),
-        { status: 500, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    const body = await req.json().catch(() => null);
-    const jdText: string | undefined = body?.prompt;
-
-    if (!jdText?.trim()) {
-      return new Response(
-        JSON.stringify({ error: "A Job Description is required." }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    const groq = createGroq({ apiKey });
-
-    const result = streamText({
-      model: groq("llama-3.3-70b-versatile"),   // 70B for higher-quality tailoring
-      system: buildSystemPrompt(),
-      prompt: `TARGET JOB DESCRIPTION:\n\n${jdText.trim()}`,
-      temperature: 0.1,   // strict enforcement of no hallucinations
-    });
-
-    /* useCompletion(streamProtocol:"text") expects a plain text/plain stream */
-    return createTextStreamResponse({ textStream: result.textStream });
-
-  } catch (err) {
-    console.error("[Resume API] Unhandled error:", err);
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: "Optimization engine offline. Try again." }),
+      JSON.stringify({ type: "error", message: "GROQ_API_KEY is not configured." }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
+
+  let jdText: string;
+  let templateId: TemplateId | "auto";
+
+  try {
+    const body = await req.json();
+    jdText = body?.prompt ?? "";
+    templateId = body?.templateId ?? "auto";
+    if (!jdText.trim()) {
+      return new Response(
+        JSON.stringify({ type: "error", message: "A Job Description is required." }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  } catch {
+    return new Response(
+      JSON.stringify({ type: "error", message: "Invalid request body." }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  /* ── NDJSON streaming response ──────────────────────────── */
+  const stream = new ReadableStream({
+    async start(controller) {
+      const emit = (chunk: StreamChunk) => controller.enqueue(encodeChunk(chunk));
+
+      try {
+        /* ── Phase 1: Status updates while LLM warms up ─── */
+        emit({ type: "status", message: "Connecting to Resume AI Engine..." });
+        await delay(350);
+
+        emit({ type: "status", message: "Analyzing job description..." });
+
+        /* ── Phase 2: LLM call (concurrent with status msgs) */
+        const groq = createGroq({ apiKey });
+
+        /* Start LLM call (non-blocking Promise) */
+        const llmPromise = generateText({
+          model: groq("llama-3.3-70b-versatile"),
+          system: buildSystemPrompt(templateId),
+          prompt: `TARGET JOB DESCRIPTION:\n\n${jdText.trim()}`,
+          temperature: 0.15,
+        });
+
+        /* Emit status updates while LLM processes */
+        await delay(800);
+        emit({ type: "status", message: templateId === "auto" ? "Selecting optimal template..." : `Applying ${templateId} template...` });
+        await delay(800);
+        emit({ type: "status", message: "Tailoring resume content to JD..." });
+        await delay(600);
+        emit({ type: "status", message: "Refining project descriptions..." });
+
+        /* ── Phase 3: Await LLM result ─────────────────── */
+        const result = await llmPromise;
+        const rawText = result.text.trim();
+
+        emit({ type: "status", message: "Parsing resume structure..." });
+        await delay(200);
+
+        /* ── Phase 4: Parse JSON ───────────────────────── */
+        let parsed: {
+          template: TemplateId;
+          templateReason: string;
+          resumeData: object;
+        };
+
+        try {
+          // Strip markdown code fences if the model wrapped the JSON
+          const cleaned = rawText
+            .replace(/^```(?:json)?\n?/, "")
+            .replace(/\n?```$/, "")
+            .trim();
+          parsed = JSON.parse(cleaned);
+        } catch {
+          emit({ type: "error", message: "Failed to parse AI response as JSON. Please try again." });
+          controller.close();
+          return;
+        }
+
+        /* Validate required fields */
+        if (!parsed.template || !parsed.resumeData) {
+          emit({ type: "error", message: "AI returned an incomplete response. Please retry." });
+          controller.close();
+          return;
+        }
+
+        /* ── Phase 5: Emit done payload ────────────────── */
+        emit({ type: "status", message: "Resume ready!" });
+        await delay(200);
+
+        emit({
+          type: "done",
+          data: {
+            template: parsed.template as TemplateId,
+            templateReason: parsed.templateReason ?? "",
+            resumeData: parsed.resumeData as Parameters<typeof emit>[0] extends { type: "done" } ? Parameters<typeof emit>[0]["data"]["resumeData"] : never,
+          },
+        });
+
+      } catch (err) {
+        console.error("[Resume API] Unhandled error:", err);
+        const message = err instanceof Error ? err.message : "Unknown error occurred.";
+        emit({ type: "error", message: `Optimization engine error: ${message}` });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson",
+      "Cache-Control": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }

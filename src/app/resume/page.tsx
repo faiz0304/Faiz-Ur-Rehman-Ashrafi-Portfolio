@@ -5,14 +5,21 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useCompletion } from "@ai-sdk/react";
-import ReactMarkdown from "react-markdown";
 import { FAIZ_RESUME_DATA } from "@/data/resumeData";
 import {
   ArrowLeft, Download, Zap, ExternalLink, GitBranch,
   MapPin, Mail, Link2, GraduationCap, Star,
-  X, Cpu, ChevronRight, RotateCcw, Printer, FileText,
+  X, Cpu, ChevronRight, RotateCcw, Printer, Sparkles,
+  RefreshCcw, Layout,
 } from "lucide-react";
+import {
+  TEMPLATE_REGISTRY,
+  TEMPLATE_IDS,
+  type TemplateId,
+  type ResumeData,
+  type StreamChunk,
+} from "@/components/resume-templates/index";
+import { ResumeTemplatePicker } from "@/components/ResumeTemplatePicker";
 
 /* ═══════════════════════════════════════════════════════════════
    Animation helpers
@@ -65,137 +72,151 @@ function GlassCard({ children, className = "", delay = 0 }: {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Tailored Resume View
-   Renders AI-generated markdown as a styled, printable document.
+   Template Result View
+   Renders the AI-chosen template with resume data + reason banner
    ═══════════════════════════════════════════════════════════════ */
-function TailoredResumeView({
-  markdown,
-  isStreaming,
-  onReset,
-}: {
-  markdown: string;
-  isStreaming: boolean;
+interface TemplateResultProps {
+  template: TemplateId;
+  templateReason: string;
+  resumeData: ResumeData;
+  activeTemplate: TemplateId;          // might differ (user swapped manually)
+  onTemplateSwitch: (id: TemplateId) => void;
   onReset: () => void;
-}) {
+}
+
+function TemplateResultView({
+  template: aiTemplate,
+  templateReason,
+  resumeData,
+  activeTemplate,
+  onTemplateSwitch,
+  onReset,
+}: TemplateResultProps) {
+  const TemplateComponent = TEMPLATE_REGISTRY[activeTemplate].component;
+
   return (
     <motion.div
-      key="tailored"
+      key="template-result"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] as const }}
-      id="tailored-resume-body"
     >
-      {/* ── Status banner (hidden on print) ──────────────── */}
-      <div className="no-print print:hidden mb-6 flex items-center justify-between rounded-xl border border-[#00F0FF]/15 bg-[#00F0FF]/[0.04] px-5 py-3">
-        <div className="flex items-center gap-3">
-          <span className={`h-2 w-2 rounded-full ${isStreaming ? "animate-pulse bg-[#00F0FF]" : "bg-emerald-400"}`} />
-          <span className="font-mono text-xs text-foreground-muted">
-            {isStreaming ? (
-              <>Generating tailored resume<span className="ml-1 animate-[cursor-blink_0.8s_step-end_infinite]">▮</span></>
-            ) : (
-              <><span className="text-emerald-400">Tailored resume ready</span> — AI-optimised for your target role</>
-            )}
-          </span>
-        </div>
-        {!isStreaming && (
+      {/* ── AI Template Reason Banner (hidden on print) ───── */}
+      <div className="no-print print:hidden mb-4 rounded-xl border border-[#00F0FF]/15 bg-[#00F0FF]/[0.03] px-5 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#00F0FF]/20 bg-[#00F0FF]/8">
+              <Sparkles className="h-3 w-3 text-[#00F0FF]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#00F0FF]/60">AI Selected</span>
+                <span
+                  className="rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold"
+                  style={{
+                    borderColor: `${TEMPLATE_REGISTRY[aiTemplate].accentColor}50`,
+                    color: TEMPLATE_REGISTRY[aiTemplate].accentColor,
+                    background: `${TEMPLATE_REGISTRY[aiTemplate].accentColor}10`,
+                  }}
+                >
+                  {TEMPLATE_REGISTRY[aiTemplate].label}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{templateReason}</p>
+            </div>
+          </div>
           <button
             onClick={onReset}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground-muted transition-all duration-200 hover:border-white/20 hover:text-foreground"
+            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground-muted transition-all duration-200 hover:border-white/20 hover:text-foreground"
           >
             <RotateCcw className="h-3 w-3" />
-            Back to default
+            Reset
           </button>
-        )}
+        </div>
       </div>
 
-      {/* ── Rendered markdown ─────────────────────────────── */}
-      <div className="tailored-resume-content rounded-2xl border border-white/[0.07] bg-[#171717] p-8 shadow-[0_4px_32px_rgba(0,0,0,0.4)] sm:p-10">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00F0FF]/20 to-transparent" />
-        <ReactMarkdown
-          components={{
-            h1: ({ ...props }) => (
-              <h1 className="mb-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl" {...props} />
-            ),
-            h2: ({ ...props }) => (
-              <h2
-                className="mb-4 mt-8 border-b border-white/[0.06] pb-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[#00F0FF] first:mt-0"
-                {...props}
-              />
-            ),
-            h3: ({ ...props }) => (
-              <h3 className="mb-2 mt-5 text-base font-semibold text-foreground" {...props} />
-            ),
-            p: ({ ...props }) => (
-              <p className="mb-3 text-sm leading-[1.85] text-foreground-muted" {...props} />
-            ),
-            ul: ({ ...props }) => (
-              <ul className="mb-4 space-y-2 pl-0" {...props} />
-            ),
-            li: ({ ...props }) => (
-              <li
-                className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground-muted"
-                {...props}
+      {/* ── Template Switcher (post-generation, hidden on print) */}
+      <div className="no-print print:hidden mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Layout className="h-3 w-3 text-white/30" />
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/30">
+            Switch Template (no re-generation needed)
+          </span>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {TEMPLATE_IDS.map((id) => {
+            const entry = TEMPLATE_REGISTRY[id];
+            const isActive = activeTemplate === id;
+            const isAiPick = id === aiTemplate;
+            return (
+              <button
+                key={id}
+                onClick={() => onTemplateSwitch(id)}
+                className="shrink-0 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[10px] transition-all duration-200"
+                style={{
+                  borderColor: isActive ? entry.accentColor : "rgba(255,255,255,0.08)",
+                  color: isActive ? entry.accentColor : "rgba(255,255,255,0.35)",
+                  background: isActive ? `${entry.accentColor}0d` : "transparent",
+                }}
               >
-                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-[#00F0FF]/50" />
-                <span>{(props as React.LiHTMLAttributes<HTMLLIElement> & { children?: React.ReactNode }).children}</span>
-              </li>
-            ),
-            strong: ({ ...props }) => (
-              <strong className="font-semibold text-foreground" {...props} />
-            ),
-            a: ({ ...props }) => (
-              <a className="text-[#00F0FF] underline-offset-2 hover:underline" target="_blank" rel="noreferrer" {...props} />
-            ),
-            code: ({ ...props }) => (
-              <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-[#00F0FF]" {...props} />
-            ),
-            hr: () => <hr className="my-6 border-white/[0.06]" />,
-            blockquote: ({ ...props }) => (
-              <blockquote className="border-l-2 border-[#00F0FF]/30 pl-4 italic text-foreground-muted" {...props} />
-            ),
-          }}
-        >
-          {markdown}
-        </ReactMarkdown>
+                {isAiPick && <Sparkles className="h-2.5 w-2.5 opacity-70" />}
+                {entry.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Streaming cursor at end of content */}
-        {isStreaming && (
-          <span className="ml-0.5 inline-block h-4 w-[3px] animate-[cursor-blink_0.8s_step-end_infinite] rounded-sm bg-[#00F0FF] align-middle shadow-[0_0_6px_#00F0FF]" />
-        )}
+      {/* ── Rendered template ──────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.07] overflow-hidden shadow-[0_4px_32px_rgba(0,0,0,0.4)] print:border-0 print:shadow-none">
+        <TemplateComponent data={resumeData} />
       </div>
     </motion.div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ATS Optimizer Modal
-   Props: receives completion hook state from parent so that the
-   result automatically shows in the page body after closing.
+   Streaming Status Display (inside modal)
+   ═══════════════════════════════════════════════════════════════ */
+function StreamingStatus({ message }: { message: string }) {
+  return (
+    <motion.div
+      key={message}
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
+      className="flex items-center gap-2.5"
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-[#00F0FF] shadow-[0_0_6px_#00F0FF] animate-pulse" />
+      <span className="font-mono text-xs text-foreground-muted">{message}</span>
+      <span className="ml-0.5 inline-block h-3 w-[2px] animate-[cursor-blink_0.8s_step-end_infinite] rounded-sm bg-[#00F0FF]/70 align-middle" />
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ATS Optimizer Modal — rebuilt with template picker + NDJSON
    ═══════════════════════════════════════════════════════════════ */
 interface OptimizerModalProps {
   onClose: () => void;
-  onComplete: (result: string) => void;
-  complete: (prompt: string) => void;
-  completion: string;
-  isLoading: boolean;
-  error: Error | undefined;
-  stop: () => void;
+  onComplete: (result: {
+    template: TemplateId;
+    templateReason: string;
+    resumeData: ResumeData;
+  }) => void;
 }
 
-function OptimizerModal({
-  onClose,
-  onComplete,
-  complete,
-  completion,
-  isLoading,
-  error,
-  stop,
-}: OptimizerModalProps) {
-  const [jdText, setJdText] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+function OptimizerModal({ onClose, onComplete }: OptimizerModalProps) {
+  const [jdText, setJdText]                     = useState("");
+  const [submitted, setSubmitted]               = useState(false);
+  const [isLoading, setIsLoading]               = useState(false);
+  const [statusMessage, setStatusMessage]       = useState("");
+  const [error, setError]                       = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId | "auto">("auto");
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const abortRef    = useRef<AbortController | null>(null);
 
   /* Focus textarea on mount */
   useEffect(() => {
@@ -203,39 +224,94 @@ function OptimizerModal({
     return () => clearTimeout(t);
   }, []);
 
-  /* Auto-scroll result panel while streaming */
-  useEffect(() => {
-    if (resultRef.current) {
-      resultRef.current.scrollTop = resultRef.current.scrollHeight;
-    }
-  }, [completion]);
-
-  /* When streaming finishes and we have content, signal parent */
-  useEffect(() => {
-    if (submitted && !isLoading && completion) {
-      onComplete(completion);
-    }
-  }, [submitted, isLoading, completion, onComplete]);
-
-  const handleSubmit = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     if (!jdText.trim() || isLoading) return;
     setSubmitted(true);
-    complete(jdText);
-  }, [jdText, isLoading, complete]);
+    setIsLoading(true);
+    setError(null);
+    setStatusMessage("Initialising...");
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const response = await fetch("/api/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: jdText.trim(),
+          templateId: selectedTemplate,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      /* Read NDJSON stream line-by-line */
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          let chunk: StreamChunk;
+          try {
+            chunk = JSON.parse(trimmed) as StreamChunk;
+          } catch {
+            continue; // skip malformed lines
+          }
+
+          if (chunk.type === "status") {
+            setStatusMessage(chunk.message);
+          } else if (chunk.type === "done") {
+            setStatusMessage("Resume ready!");
+            onComplete(chunk.data);
+            onClose();
+          } else if (chunk.type === "error") {
+            setError(chunk.message);
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setError(err instanceof Error ? err.message : "Unknown error. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [jdText, isLoading, selectedTemplate, onComplete, onClose]);
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+    setIsLoading(false);
+    setSubmitted(false);
+    setStatusMessage("");
+  }, []);
 
   const handleReset = useCallback(() => {
-    stop();
-    setSubmitted(false);
+    handleStop();
     setJdText("");
-  }, [stop]);
+    setError(null);
+  }, [handleStop]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSubmit();
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleGenerate();
   };
 
-  const isIdle = !submitted;
-  const isStreaming = submitted && isLoading;
-  const isDone = submitted && !isLoading && !!completion;
+  const isIdle      = !submitted;
+  const isDoneError = submitted && !isLoading && !!error;
 
   return createPortal(
     <AnimatePresence>
@@ -261,18 +337,18 @@ function OptimizerModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 16 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as const }}
-        className="fixed inset-x-4 bottom-4 top-[5.5rem] z-[201] mx-auto flex max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111111] shadow-[0_0_0_1px_rgba(0,240,255,0.05),0_24px_80px_rgba(0,0,0,0.8)]"
+        className="fixed inset-x-4 bottom-4 top-[4.5rem] z-[201] mx-auto flex max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111111] shadow-[0_0_0_1px_rgba(0,240,255,0.05),0_24px_80px_rgba(0,0,0,0.8)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top glow edge */}
+        {/* Top glow */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00F0FF]/50 to-transparent" />
 
         {/* ── Header ──────────────────────────────────── */}
         <div className="relative flex shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0D0D0D] px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-[#00F0FF]/20 bg-[#00F0FF]/8">
-              <Cpu className={`h-4 w-4 text-[#00F0FF] ${isStreaming ? "animate-pulse" : ""}`} />
-              {isStreaming && (
+              <Cpu className={`h-4 w-4 text-[#00F0FF] ${isLoading ? "animate-pulse" : ""}`} />
+              {isLoading && (
                 <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#111111] bg-[#00F0FF] shadow-[0_0_6px_#00F0FF]">
                   <span className="absolute inset-0 animate-ping rounded-full bg-[#00F0FF] opacity-60" />
                 </span>
@@ -280,28 +356,19 @@ function OptimizerModal({
             </div>
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00F0FF]/60">System Module</p>
-              <h2 className="font-mono text-sm font-bold text-foreground">[ INITIALIZE ATS ALIGNMENT ]</h2>
+              <h2 className="font-mono text-sm font-bold text-foreground">[ RESUME ARCHITECT AI ]</h2>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {isStreaming && (
+            {isLoading && (
               <motion.span
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="hidden font-mono text-[10px] uppercase tracking-widest text-[#00F0FF] sm:block"
               >
-                Analyzing JD<span className="ml-1 animate-[cursor-blink_0.8s_step-end_infinite]">▮</span>
-              </motion.span>
-            )}
-            {isDone && (
-              <motion.span
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-emerald-400 sm:flex"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Payload Ready
+                Processing
+                <span className="ml-1 animate-[cursor-blink_0.8s_step-end_infinite]">▮</span>
               </motion.span>
             )}
             <button
@@ -318,7 +385,7 @@ function OptimizerModal({
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <AnimatePresence mode="wait">
 
-            {/* STATE: JD INPUT */}
+            {/* STATE: INPUT */}
             {isIdle && (
               <motion.div
                 key="input-state"
@@ -326,16 +393,27 @@ function OptimizerModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-1 flex-col gap-5 p-5 sm:p-7"
+                className="flex flex-1 flex-col gap-5 p-5 sm:p-6"
               >
+                {/* ── Template Picker ─────────────────── */}
+                <div className="rounded-xl border border-white/[0.06] bg-[#0D0D0D] p-4">
+                  <ResumeTemplatePicker
+                    selected={selectedTemplate}
+                    onChange={setSelectedTemplate}
+                  />
+                </div>
+
                 {/* Instruction banner */}
                 <div className="flex items-start gap-3 rounded-xl border border-[#00F0FF]/10 bg-[#00F0FF]/[0.04] p-4">
                   <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#00F0FF]/60" />
                   <p className="text-sm leading-relaxed text-foreground-muted">
                     Paste a <span className="font-medium text-foreground">Job Description</span> below.
-                    The AI rewrites Faiz&apos;s summary and project bullets to match the JD&apos;s
-                    keywords — using only verified profile data.
-                    <span className="mt-1.5 block font-mono text-[10px] text-[#00F0FF]/50">
+                    The AI will{" "}
+                    {selectedTemplate === "auto"
+                      ? "select the best template and"
+                      : `use the ${TEMPLATE_REGISTRY[selectedTemplate].label} template and`}{" "}
+                    rewrite the resume to mirror the JD&apos;s keywords — using only verified profile data.
+                    <span className="mt-1 block font-mono text-[10px] text-[#00F0FF]/50">
                       Tip: Ctrl + Enter to submit
                     </span>
                   </p>
@@ -349,7 +427,7 @@ function OptimizerModal({
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
                     <span className="ml-2 font-mono text-[10px] tracking-widest text-foreground-subtle">JD_INPUT.txt</span>
                   </div>
-                  <div className="flex min-h-[220px] items-start gap-3 p-4">
+                  <div className="flex min-h-[180px] items-start gap-3 p-4">
                     <span className="select-none pt-[3px] font-mono text-xs text-[#00F0FF]/40">{">"}</span>
                     <textarea
                       ref={textareaRef}
@@ -358,7 +436,7 @@ function OptimizerModal({
                       onChange={(e) => setJdText(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Paste the full Job Description here..."
-                      className="min-h-[220px] flex-1 resize-none bg-transparent font-mono text-sm leading-relaxed text-foreground outline-none placeholder:text-foreground-subtle/50"
+                      className="min-h-[180px] flex-1 resize-none bg-transparent font-mono text-sm leading-relaxed text-foreground outline-none placeholder:text-foreground-subtle/50"
                       spellCheck={false}
                     />
                   </div>
@@ -374,7 +452,7 @@ function OptimizerModal({
                 {/* Submit */}
                 <button
                   id="generate-tailored-resume"
-                  onClick={handleSubmit}
+                  onClick={handleGenerate}
                   disabled={!jdText.trim()}
                   className={`group relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-xl py-3.5 font-mono text-sm font-bold tracking-wide transition-all duration-300
                     ${jdText.trim()
@@ -390,94 +468,75 @@ function OptimizerModal({
               </motion.div>
             )}
 
-            {/* STATE: STREAMING / RESULT */}
-            {submitted && (
+            {/* STATE: LOADING */}
+            {submitted && isLoading && (
               <motion.div
-                key="result-state"
+                key="loading-state"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-1 flex-col gap-0"
+                transition={{ duration: 0.2 }}
+                className="flex flex-1 flex-col items-center justify-center gap-6 p-8"
               >
-                {/* Sub-toolbar */}
-                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.05] bg-[#0D0D0D] px-5 py-2.5">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-foreground-subtle">
-                    {isStreaming ? "// Generating tailored output..." : "// Optimised resume payload ready"}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {isDone && (
-                      <>
-                        <button
-                          onClick={() => { onClose(); }}
-                          className="flex items-center gap-1.5 rounded-lg border border-[#00F0FF]/30 bg-[#00F0FF]/8 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-[#00F0FF] transition-all duration-200 hover:bg-[#00F0FF]/15"
-                        >
-                          <FileText className="h-3 w-3" />
-                          View Resume
-                        </button>
-                        <button
-                          onClick={() => window.print()}
-                          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground-muted transition-all duration-200 hover:border-[#00F0FF]/30 hover:text-[#00F0FF]"
-                        >
-                          <Printer className="h-3 w-3" />
-                          Export PDF
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={handleReset}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground-muted transition-all duration-200 hover:border-white/20 hover:text-foreground"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      New JD
-                    </button>
+                {/* Pulsing orb */}
+                <div className="relative">
+                  <div className="h-16 w-16 rounded-full border border-[#00F0FF]/20 bg-[#00F0FF]/5 flex items-center justify-center">
+                    <Cpu className="h-7 w-7 text-[#00F0FF] animate-pulse" />
                   </div>
+                  <div className="absolute inset-0 rounded-full border border-[#00F0FF]/20 animate-ping opacity-30" />
                 </div>
 
-                {/* Streaming markdown preview inside modal */}
-                <div ref={resultRef} className="flex-1 overflow-y-auto p-5 sm:p-7">
-                  <div>
-                    <ReactMarkdown
-                      components={{
-                        h1: ({ ...props }) => <h1 className="mb-2 mt-0 text-2xl font-bold tracking-tight text-foreground" {...props} />,
-                        h2: ({ ...props }) => <h2 className="mb-3 mt-7 border-b border-white/[0.06] pb-2 font-mono text-xs font-bold uppercase tracking-[0.15em] text-[#00F0FF]" {...props} />,
-                        h3: ({ ...props }) => <h3 className="mb-2 mt-5 text-base font-semibold text-foreground" {...props} />,
-                        p: ({ ...props }) => <p className="mb-3 text-sm leading-[1.85] text-foreground-muted" {...props} />,
-                        ul: ({ ...props }) => <ul className="mb-4 space-y-1.5 pl-0" {...props} />,
-                        li: ({ ...props }) => (
-                          <li className="flex items-start gap-2 text-sm leading-relaxed text-foreground-muted" {...props}>
-                            <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-[#00F0FF]/50" />
-                            <span>{(props as React.LiHTMLAttributes<HTMLLIElement> & { children?: React.ReactNode }).children}</span>
-                          </li>
-                        ),
-                        strong: ({ ...props }) => <strong className="font-semibold text-foreground" {...props} />,
-                        a: ({ ...props }) => <a className="text-[#00F0FF] underline-offset-2 hover:underline" target="_blank" rel="noreferrer" {...props} />,
-                        code: ({ ...props }) => <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-[#00F0FF]" {...props} />,
-                        hr: () => <hr className="my-6 border-white/[0.06]" />,
-                      }}
-                    >
-                      {completion}
-                    </ReactMarkdown>
-                    {isStreaming && (
-                      <span className="ml-0.5 inline-block h-4 w-[3px] animate-[cursor-blink_0.8s_step-end_infinite] rounded-sm bg-[#00F0FF] align-middle shadow-[0_0_6px_#00F0FF]" />
-                    )}
-                  </div>
+                {/* Status message */}
+                <div className="flex flex-col items-center gap-2">
+                  <AnimatePresence mode="wait">
+                    <StreamingStatus key={statusMessage} message={statusMessage} />
+                  </AnimatePresence>
+                  <p className="font-mono text-[10px] text-foreground-subtle/50">
+                    {selectedTemplate === "auto"
+                      ? "AI is analyzing your JD and selecting the best template..."
+                      : `Using ${TEMPLATE_REGISTRY[selectedTemplate as TemplateId]?.label ?? selectedTemplate} template...`}
+                  </p>
                 </div>
+
+                {/* Cancel */}
+                <button
+                  onClick={handleStop}
+                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground-muted transition-all duration-200 hover:border-white/20 hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                  Cancel
+                </button>
               </motion.div>
             )}
-          </AnimatePresence>
 
-          {/* Error banner */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mx-5 mb-5 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3"
-            >
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
-              <p className="font-mono text-xs text-red-400">Engine error: {error.message}</p>
-            </motion.div>
-          )}
+            {/* STATE: ERROR */}
+            {isDoneError && (
+              <motion.div
+                key="error-state"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-1 flex-col items-center justify-center gap-4 p-8"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/[0.06]">
+                  <X className="h-6 w-6 text-red-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-mono text-sm font-semibold text-red-400">Engine Error</p>
+                  <p className="mt-1 font-mono text-xs text-foreground-muted">{error}</p>
+                </div>
+                <button
+                  onClick={handleReset}
+                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 font-mono text-xs text-foreground-muted transition-all duration-200 hover:border-white/20 hover:text-foreground"
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  Try Again
+                </button>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00F0FF]/10 to-transparent" />
@@ -494,33 +553,35 @@ export default function ResumePage() {
   const { basics, summary, education, technicalSkills, projects, strengths, continuousLearning } =
     FAIZ_RESUME_DATA;
 
-  /* ── Modal open/close state ─────────────────────────────── */
+  /* ── Modal state ─────────────────────────────────────────── */
   const [optimizerOpen, setOptimizerOpen] = useState(false);
-  
-  /* ── Print fallback image state to fix hydration ────────── */
-  const [printImageSrc, setPrintImageSrc] = useState(basics.profilePicture);
 
-  useEffect(() => {
-    setPrintImageSrc(`${window.location.origin}${basics.profilePicture}`);
-  }, [basics.profilePicture]);
+  /* ── AI Result state ─────────────────────────────────────── */
+  const [templateResult, setTemplateResult] = useState<{
+    template: TemplateId;
+    templateReason: string;
+    resumeData: ResumeData;
+  } | null>(null);
 
-  /* ── Lifted AI completion state ─────────────────────────── */
-  /* useCompletion lives here so the result persists when modal closes */
-  const { completion, complete, isLoading, error, stop } = useCompletion({
-    api: "/api/resume",
-    streamProtocol: "text",   // matches createTextStreamResponse on backend
-  });
+  /* Active template (user can switch post-generation without re-running) */
+  const [activeTemplate, setActiveTemplate] = useState<TemplateId>("agentic");
 
-  /* Whether we're showing the AI tailored view */
-  const isTailored = !!completion;
-  const isStreaming = isTailored && isLoading;
+  const isTailored = !!templateResult;
 
-  /* Reset back to the default digital resume */
+  /* Reset back to default */
   const handleReset = useCallback(() => {
-    stop();
-    /* useCompletion doesn't expose a clear method — navigate to reset SWR */
-    window.location.reload();
-  }, [stop]);
+    setTemplateResult(null);
+  }, []);
+
+  /* Handle AI completion — store result, set active template */
+  const handleComplete = useCallback((result: {
+    template: TemplateId;
+    templateReason: string;
+    resumeData: ResumeData;
+  }) => {
+    setTemplateResult(result);
+    setActiveTemplate(result.template);
+  }, []);
 
   /* Body scroll lock while modal is open */
   useEffect(() => {
@@ -537,8 +598,6 @@ export default function ResumePage() {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
-  /* PDF prints whatever is visible — no extra logic needed since
-     both views share the same #printable-resume wrapper. */
   const handlePrint = () => window.print();
 
   const skillGroups: { label: string; skills: string[] }[] = [
@@ -554,16 +613,11 @@ export default function ResumePage() {
     <div className="min-h-screen bg-[#0A0A0A] text-foreground">
       <div className="print:hidden">
 
-      {/* ── Optimizer Modal (portal — above everything) ───── */}
+      {/* ── Optimizer Modal ───────────────────────────────── */}
       {optimizerOpen && (
         <OptimizerModal
           onClose={() => setOptimizerOpen(false)}
-          onComplete={() => setOptimizerOpen(false)}
-          complete={complete}
-          completion={completion}
-          isLoading={isLoading}
-          error={error}
-          stop={stop}
+          onComplete={handleComplete}
         />
       )}
 
@@ -591,15 +645,20 @@ export default function ResumePage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            {/* Show "Tailored" mode indicator when AI result is active */}
+            {/* AI Tailored badge */}
             {isTailored && !optimizerOpen && (
               <motion.span
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="hidden items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-emerald-400 sm:flex"
+                className="hidden items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider sm:flex"
+                style={{
+                  borderColor: `${TEMPLATE_REGISTRY[activeTemplate].accentColor}40`,
+                  color: TEMPLATE_REGISTRY[activeTemplate].accentColor,
+                  background: `${TEMPLATE_REGISTRY[activeTemplate].accentColor}10`,
+                }}
               >
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                AI Tailored
+                <Sparkles className="h-2.5 w-2.5" />
+                {TEMPLATE_REGISTRY[activeTemplate].label} · AI Tailored
               </motion.span>
             )}
 
@@ -613,7 +672,7 @@ export default function ResumePage() {
               {isTailored ? "Re-optimise" : "AI Optimizer"}
             </button>
 
-            {/* 📄 Download PDF — prints whatever #printable-resume contains */}
+            {/* 📄 Download PDF */}
             <button
               onClick={handlePrint}
               id="resume-download-pdf"
@@ -631,16 +690,18 @@ export default function ResumePage() {
         id="printable-resume"
         className="mx-auto max-w-[900px] space-y-6 px-4 py-10 sm:px-6 sm:py-14"
       >
-        {/* Step 1: Isolate the Web UI */}
         <div className="space-y-6">
           <AnimatePresence mode="wait">
 
-            {/* ══ AI TAILORED VIEW ═══════════════════════════════ */}
-            {isTailored ? (
-              <TailoredResumeView
-                key="tailored"
-                markdown={completion}
-                isStreaming={isStreaming}
+            {/* ══ AI TAILORED VIEW ════════════════════════════════ */}
+            {isTailored && templateResult ? (
+              <TemplateResultView
+                key="template-result"
+                template={templateResult.template}
+                templateReason={templateResult.templateReason}
+                resumeData={templateResult.resumeData}
+                activeTemplate={activeTemplate}
+                onTemplateSwitch={setActiveTemplate}
                 onReset={handleReset}
               />
             ) : (
@@ -868,7 +929,7 @@ export default function ResumePage() {
                   </GlassCard>
                 </div>
 
-                {/* ── Footer watermark ──────────────────────────── */}
+                {/* Footer watermark */}
                 <motion.div {...fadeIn(0.5)} className="pb-4 text-center">
                   <p className="font-mono text-[10px] text-foreground-subtle">
                     <span className="text-[#00F0FF]/40">// </span>
@@ -884,114 +945,85 @@ export default function ResumePage() {
       </main>
       </div>
 
-      {/* Step 2 & 3: Print-Only DOM Node */}
+      {/* ── Print-only layout ────────────────────────────────── */}
       <div id="print-layout-root" className="hidden print:block bg-white text-black p-0 m-0">
-          {isTailored ? (
-            <ReactMarkdown
-              components={{
-                h1: ({ ...props }) => (
-                  <h1 className="print:text-3xl print:font-extrabold border-b-2 border-black pb-2 mb-3 m-0" {...props} />
-                ),
-                h2: ({ ...props }) => (
-                  <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3 m-0" {...props} />
-                ),
-                h3: ({ ...props }) => (
-                  <h3 className="text-xs font-bold mt-3 mb-1 m-0" {...props} />
-                ),
-                p: ({ ...props }) => (
-                  <p className="mb-2 leading-relaxed text-justify m-0" {...props} />
-                ),
-                ul: ({ ...props }) => (
-                  <ul className="mb-3 list-disc pl-5 space-y-1 m-0" {...props} />
-                ),
-                li: ({ ...props }) => (
-                  <li className="leading-relaxed m-0" {...props} />
-                ),
-                strong: ({ ...props }) => (
-                  <strong className="font-semibold" {...props} />
-                ),
-                a: ({ ...props }) => (
-                  <span className="underline" {...props} />
-                ),
-              }}
-            >
-              {completion}
-            </ReactMarkdown>
-          ) : (
-            <>
-              {/* Header */}
-              <header className="print:flex print:flex-col print:items-center print:text-center print:mb-6 print:border-b-2 print:border-gray-800 print:pb-4">
-                <h1 className="print:text-3xl print:font-extrabold print:uppercase print:tracking-wide print:mb-1 print:text-black">
-                  {FAIZ_RESUME_DATA.basics.name}
-                </h1>
-                <h2 className="print:text-lg print:font-semibold print:text-gray-700 print:mb-2">
-                  {FAIZ_RESUME_DATA.basics.title}
-                </h2>
-                <p className="print:text-sm print:text-gray-600">
-                  {FAIZ_RESUME_DATA.basics.email} • {FAIZ_RESUME_DATA.basics.linkedin} • {FAIZ_RESUME_DATA.basics.github} • {FAIZ_RESUME_DATA.basics.location}
-                </p>
-              </header>
+        {isTailored && templateResult ? (
+          /* Use the active template component for print */
+          (() => {
+            const PrintTemplate = TEMPLATE_REGISTRY[activeTemplate].component;
+            return <PrintTemplate data={templateResult.resumeData} />;
+          })()
+        ) : (
+          /* Default print layout */
+          <>
+            <header className="print:flex print:flex-col print:items-center print:text-center print:mb-6 print:border-b-2 print:border-gray-800 print:pb-4">
+              <h1 className="print:text-3xl print:font-extrabold print:uppercase print:tracking-wide print:mb-1 print:text-black">
+                {FAIZ_RESUME_DATA.basics.name}
+              </h1>
+              <h2 className="print:text-lg print:font-semibold print:text-gray-700 print:mb-2">
+                {FAIZ_RESUME_DATA.basics.title}
+              </h2>
+              <p className="print:text-sm print:text-gray-600">
+                {FAIZ_RESUME_DATA.basics.email} • {FAIZ_RESUME_DATA.basics.linkedin} • {FAIZ_RESUME_DATA.basics.github} • {FAIZ_RESUME_DATA.basics.location}
+              </p>
+            </header>
 
-              {/* Professional Summary */}
-              <div className="mb-4">
-                <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Professional Summary</h2>
-                <p className="leading-relaxed text-justify m-0">{summary}</p>
+            <div className="mb-4">
+              <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Professional Summary</h2>
+              <p className="leading-relaxed text-justify m-0">{summary}</p>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Technical Skills</h2>
+              <div className="space-y-1">
+                {skillGroups.map((group) => (
+                  <p key={group.label} className="m-0 print:mb-1.5">
+                    <strong className="print:font-bold text-black">{group.label}:</strong> {group.skills.join(", ")}
+                  </p>
+                ))}
               </div>
+            </div>
 
-              {/* Technical Skills */}
-              <div className="mb-4">
-                <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Technical Skills</h2>
-                <div className="space-y-1">
-                  {skillGroups.map((group) => (
-                    <p key={group.label} className="m-0 print:mb-1.5">
-                      <strong className="print:font-bold text-black">{group.label}:</strong> {group.skills.join(", ")}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              {/* Education */}
-              <div className="mb-4">
-                <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Education</h2>
-                <ul className="list-none p-0 m-0 space-y-2">
-                  {education.map((edu, idx) => (
-                    <li key={idx} className="m-0">
-                      <div className="print:flex print:justify-between print:font-bold">
-                        <span>{edu.degree} - {edu.institution}</span>
-                        <span>{edu.year}</span>
-                      </div>
-                      <div className="text-gray-700 mt-0.5">
-                        <span>{edu.gpa}</span>
-                        {edu.honors && <span className="ml-2 font-semibold text-amber-700">({edu.honors})</span>}
-                      </div>
-                      {edu.detail && <p className="text-gray-600 mt-1 m-0">{edu.detail}</p>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Selected Work */}
-              <div className="mb-4">
-                <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Selected Work</h2>
-                <div className="space-y-3">
-                  {projects.map((proj, idx) => (
-                    <div key={idx} className="print:break-inside-avoid print:last:mb-0 print:last:pb-0">
-                      <div className="print:flex print:justify-between print:items-baseline print:mb-1">
-                        <h3 className="print:font-bold print:text-gray-900">{proj.title}</h3>
-                        {proj.githubLink && (
-                          <span className="print:text-xs print:text-gray-500">{proj.githubLink.replace("https://", "")}</span>
-                        )}
-                      </div>
-                      <p className="text-gray-700 m-0 mt-0.5">{proj.description}</p>
-                      <p className="text-gray-500 m-0 mt-0.5">
-                        <strong>Technologies:</strong> {proj.tags.join(", ")}
-                      </p>
+            <div className="mb-4">
+              <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Education</h2>
+              <ul className="list-none p-0 m-0 space-y-2">
+                {education.map((edu, idx) => (
+                  <li key={idx} className="m-0">
+                    <div className="print:flex print:justify-between print:font-bold">
+                      <span>{edu.degree} - {edu.institution}</span>
+                      <span>{edu.year}</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-gray-700 mt-0.5">
+                      <span>{edu.gpa}</span>
+                      {edu.honors && <span className="ml-2 font-semibold text-amber-700">({edu.honors})</span>}
+                    </div>
+                    {edu.detail && <p className="text-gray-600 mt-1 m-0">{edu.detail}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="print:text-base print:font-bold print:uppercase print:tracking-widest print:text-gray-900 print:border-b-2 print:border-gray-800 print:pb-1 print:mt-6 print:mb-3">Selected Work</h2>
+              <div className="space-y-3">
+                {projects.map((proj, idx) => (
+                  <div key={idx} className="print:break-inside-avoid">
+                    <div className="print:flex print:justify-between print:items-baseline print:mb-1">
+                      <h3 className="print:font-bold print:text-gray-900">{proj.title}</h3>
+                      {proj.githubLink && (
+                        <span className="print:text-xs print:text-gray-500">{proj.githubLink.replace("https://", "")}</span>
+                      )}
+                    </div>
+                    <p className="text-gray-700 m-0 mt-0.5">{proj.description}</p>
+                    <p className="text-gray-500 m-0 mt-0.5">
+                      <strong>Technologies:</strong> {proj.tags.join(", ")}
+                    </p>
+                  </div>
+                ))}
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
