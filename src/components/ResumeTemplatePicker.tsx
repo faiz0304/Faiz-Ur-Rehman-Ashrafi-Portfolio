@@ -229,11 +229,92 @@ function AcademicPreview() {
 
 const PREVIEW_COMPONENTS: Record<TemplateId, React.FC> = {
   minimalist: MinimalistPreview,
+  photoMinimalist: PhotoMinimalistPreview,
   agentic: AgenticPreview,
+  executivePhoto: ExecutivePhotoPreview,
   modern: ModernPreview,
+  creativeModern: CreativeModernPreview,
   vibe: VibePreview,
   academic: AcademicPreview,
 };
+
+function PhotoMinimalistPreview() {
+  return (
+    <div className="h-full w-full bg-white p-2.5 flex flex-col gap-1.5">
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex-1 flex flex-col gap-1">
+          <div className="h-2.5 w-16 bg-gray-700 rounded-sm" />
+          <div className="h-1.5 w-12 bg-gray-300 rounded-sm" />
+        </div>
+        <div className="h-4.5 w-4.5 rounded-full bg-gray-300 border border-gray-100 shrink-0" />
+      </div>
+      <div className="mt-0.5 h-px w-full bg-gray-100" />
+      <div className="h-1 w-full bg-gray-100 rounded-sm" />
+      <div className="h-1 w-5/6 bg-gray-100 rounded-sm" />
+      <div className="mt-0.5 h-px w-full bg-gray-100" />
+      {[0, 1].map((i) => (
+        <div key={i} className="pl-1.5 border-l border-gray-100 flex flex-col gap-0.5">
+          <div className="h-1.5 w-14 bg-gray-200 rounded-sm" />
+          <div className="h-1 w-full bg-gray-100 rounded-sm" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExecutivePhotoPreview() {
+  return (
+    <div className="h-full w-full bg-white p-2.5 flex flex-col gap-1.5">
+      <div className="flex items-start gap-2 pb-1.5 border-b border-gray-100">
+        <div className="h-5 w-5 rounded bg-gray-300 shrink-0 border border-gray-100" />
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className="h-2 w-14 bg-slate-800 rounded-sm" />
+          <div className="h-1.5 w-10 bg-blue-700 rounded-sm" />
+          <div className="h-1 w-12 bg-gray-100 rounded-sm" />
+        </div>
+      </div>
+      <div className="h-1 w-full bg-gray-200 rounded-sm" />
+      <div className="h-1 w-5/6 bg-gray-100 rounded-sm" />
+      {[0, 1].map((i) => (
+        <div key={i} className="flex flex-col gap-0.5">
+          <div className="h-1.5 w-16 bg-blue-700 rounded-sm" style={{ opacity: 0.8 }} />
+          <div className="h-1 w-full bg-gray-100 rounded-sm" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CreativeModernPreview() {
+  return (
+    <div className="h-full w-full flex bg-white">
+      <div className="w-[38%] h-full flex flex-col gap-1.5 p-1.5 bg-slate-900">
+        <div className="h-4.5 w-4.5 rounded-full bg-pink-400 border border-slate-900 mx-auto shadow-sm" />
+        <div className="h-1.5 w-10 bg-white rounded-sm mx-auto" />
+        <div className="h-1 w-8 bg-[#00F0FF] rounded-sm mx-auto" />
+        <div className="mt-1 flex flex-wrap gap-0.5 justify-center">
+          {[8, 6, 8].map((w, i) => (
+            <div key={i} className="h-1 rounded-full bg-white/20" style={{ width: `${w}px` }} />
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 p-2 flex flex-col gap-1.5">
+        <div className="flex items-center gap-1">
+          <div className="h-1.5 w-8 bg-pink-500 rounded-sm" />
+          <div className="flex-1 h-px bg-pink-100" />
+        </div>
+        <div className="h-1 w-full bg-gray-100 rounded-sm" />
+        <div className="h-1 w-5/6 bg-gray-200 rounded-sm" />
+        {[0, 1].map((i) => (
+          <div key={i} className="rounded p-1 bg-pink-50/30 border border-pink-100">
+            <div className="h-1.5 w-10 bg-slate-700 rounded-sm mb-0.5" />
+            <div className="h-1 w-full bg-gray-100 rounded-sm" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 

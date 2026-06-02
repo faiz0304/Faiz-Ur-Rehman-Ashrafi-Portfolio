@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Minimalist Template
+ * PhotoMinimalist Template
  *
- * Single-column, white background, generous whitespace.
- * Optimised for ATS parsing and traditional corporate roles.
- * Typography: Inter (sans-serif), thin weights, muted palette.
+ * Elegantly simple layout with serif headings, ample whitespace.
+ * Clean circular profile picture positioned top-right of the header.
+ * Re-flows content gracefully to full width if no image is present.
  */
 
 import type { ResumeData } from "./index";
@@ -25,8 +25,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function MinimalistTemplate({ data }: Props) {
-  const { basics, summary, education, technicalSkills, projects, strengths, continuousLearning, profileImageUrl } = data;
+export function PhotoMinimalistTemplate({ data }: Props) {
+  const { basics, summary, education, technicalSkills, projects, strengths, profileImageUrl } = data;
 
   const allSkills: string[] = [
     ...technicalSkills.programmingAndData,
@@ -39,18 +39,18 @@ export function MinimalistTemplate({ data }: Props) {
 
   return (
     <div
-      id="minimalist-resume"
+      id="photo-minimalist-resume"
       className="bg-white text-gray-900 font-sans w-full max-w-[800px] mx-auto p-10 print:p-8 shadow-xl print:shadow-none"
-      style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif" }}
+      style={{ fontFamily: "'Inter', sans-serif" }}
     >
       {/* ── Header ─────────────────────────────────────────── */}
-      <header className="mb-7 flex items-start justify-between gap-6">
+      <header className="flex items-start justify-between gap-6 mb-7">
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-extralight tracking-[0.06em] text-gray-900 uppercase">
+          <h1 className="text-3xl font-normal tracking-[0.04em] text-gray-800 uppercase font-serif" style={{ fontFamily: "Georgia, serif" }}>
             {basics.name}
           </h1>
-          <p className="mt-1 text-sm font-light text-gray-500 tracking-wide">{basics.title}</p>
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
+          <p className="mt-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">{basics.title}</p>
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
             {[
               { icon: Mail,      label: basics.email },
               { icon: MapPin,    label: basics.location },
@@ -64,8 +64,9 @@ export function MinimalistTemplate({ data }: Props) {
             ))}
           </div>
         </div>
+
         {profileImageUrl && (
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-gray-200">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-gray-200 shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={profileImageUrl}

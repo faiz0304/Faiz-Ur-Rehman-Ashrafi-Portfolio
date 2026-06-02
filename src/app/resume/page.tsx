@@ -9,7 +9,7 @@ import { FAIZ_RESUME_DATA } from "@/data/resumeData";
 import {
   ArrowLeft, Download, Zap, ExternalLink, GitBranch,
   MapPin, Mail, Link2, GraduationCap, Star,
-  X, Cpu, ChevronRight, RotateCcw, Printer, Sparkles,
+  X, Cpu, ChevronRight, RotateCcw, Sparkles,
   RefreshCcw, Layout,
 } from "lucide-react";
 import {
@@ -20,6 +20,9 @@ import {
   type StreamChunk,
 } from "@/components/resume-templates/index";
 import { ResumeTemplatePicker } from "@/components/ResumeTemplatePicker";
+import { useResumeStore } from "@/store/useResumeStore";
+import { VibeEditBar } from "@/components/VibeEditBar";
+import { ProfileImageUploader } from "@/components/ProfileImageUploader";
 
 /* ═══════════════════════════════════════════════════════════════
    Animation helpers
@@ -74,12 +77,13 @@ function GlassCard({ children, className = "", delay = 0 }: {
 /* ═══════════════════════════════════════════════════════════════
    Template Result View
    Renders the AI-chosen template with resume data + reason banner
+   resumeData is read from the Zustand store so vibe edits cause
+   immediate live re-renders without any prop drilling.
    ═══════════════════════════════════════════════════════════════ */
 interface TemplateResultProps {
-  template: TemplateId;
+  template: TemplateId;          // AI’s original pick (for the badge)
   templateReason: string;
-  resumeData: ResumeData;
-  activeTemplate: TemplateId;          // might differ (user swapped manually)
+  activeTemplate: TemplateId;   // currently displayed (might differ)
   onTemplateSwitch: (id: TemplateId) => void;
   onReset: () => void;
 }
@@ -87,12 +91,17 @@ interface TemplateResultProps {
 function TemplateResultView({
   template: aiTemplate,
   templateReason,
-  resumeData,
   activeTemplate,
   onTemplateSwitch,
   onReset,
 }: TemplateResultProps) {
+  /* — read live data from the central store so vibe edits update instantly — */
+  const resumeData = useResumeStore((s) => s.resumeData);
+  const editLog    = useResumeStore((s) => s.editLog);
+
   const TemplateComponent = TEMPLATE_REGISTRY[activeTemplate].component;
+
+  if (!resumeData) return null;
 
   return (
     <motion.div
@@ -122,6 +131,12 @@ function TemplateResultView({
                 >
                   {TEMPLATE_REGISTRY[aiTemplate].label}
                 </span>
+                {/* Live edit count badge */}
+                {editLog.length > 0 && (
+                  <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[9px] font-semibold text-amber-400">
+                    {editLog.length} vibe edit{editLog.length !== 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
               <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{templateReason}</p>
             </div>
@@ -168,7 +183,7 @@ function TemplateResultView({
         </div>
       </div>
 
-      {/* ── Rendered template ──────────────────────────────── */}
+      {/* ── Rendered template ──────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.07] overflow-hidden shadow-[0_4px_32px_rgba(0,0,0,0.4)] print:border-0 print:shadow-none">
         <TemplateComponent data={resumeData} />
       </div>
@@ -556,32 +571,31 @@ export default function ResumePage() {
   /* ── Modal state ─────────────────────────────────────────── */
   const [optimizerOpen, setOptimizerOpen] = useState(false);
 
-  /* ── AI Result state ─────────────────────────────────────── */
-  const [templateResult, setTemplateResult] = useState<{
-    template: TemplateId;
-    templateReason: string;
-    resumeData: ResumeData;
-  } | null>(null);
+  /* ── Resume state from Zustand store (replaces local state) ── */
+  const resumeData       = useResumeStore((s) => s.resumeData);
+  const activeTemplate   = useResumeStore((s) => s.activeTemplate);
+  const aiChosenTemplate = useResumeStore((s) => s.aiChosenTemplate);
+  const templateReason   = useResumeStore((s) => s.templateReason);
+  const initFromGeneration = useResumeStore((s) => s.initFromGeneration);
+  const setActiveTemplate  = useResumeStore((s) => s.setActiveTemplate);
+  const storeReset         = useResumeStore((s) => s.reset);
+  const storeProfileImageUrl = useResumeStore((s) => s.profileImageUrl);
 
-  /* Active template (user can switch post-generation without re-running) */
-  const [activeTemplate, setActiveTemplate] = useState<TemplateId>("agentic");
+  const isTailored = !!resumeData;
 
-  const isTailored = !!templateResult;
-
-  /* Reset back to default */
+  /* Reset back to default — clears the Zustand store */
   const handleReset = useCallback(() => {
-    setTemplateResult(null);
-  }, []);
+    storeReset();
+  }, [storeReset]);
 
-  /* Handle AI completion — store result, set active template */
+  /* Handle AI completion — delegates entirely to the store */
   const handleComplete = useCallback((result: {
     template: TemplateId;
     templateReason: string;
     resumeData: ResumeData;
   }) => {
-    setTemplateResult(result);
-    setActiveTemplate(result.template);
-  }, []);
+    initFromGeneration(result);
+  }, [initFromGeneration]);
 
   /* Body scroll lock while modal is open */
   useEffect(() => {
@@ -694,16 +708,27 @@ export default function ResumePage() {
           <AnimatePresence mode="wait">
 
             {/* ══ AI TAILORED VIEW ════════════════════════════════ */}
-            {isTailored && templateResult ? (
-              <TemplateResultView
-                key="template-result"
-                template={templateResult.template}
-                templateReason={templateResult.templateReason}
-                resumeData={templateResult.resumeData}
-                activeTemplate={activeTemplate}
-                onTemplateSwitch={setActiveTemplate}
-                onReset={handleReset}
-              />
+            {isTailored && resumeData && aiChosenTemplate ? (
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+                {/* ── Left Sidebar (Controls) ─────────────────── */}
+                <aside className="w-full shrink-0 space-y-6 lg:w-[280px] no-print print:hidden">
+                  <ProfileImageUploader />
+                </aside>
+
+                {/* ── Right Content (Template Preview & Editor) ── */}
+                <div className="flex-1 min-w-0 space-y-6">
+                  <TemplateResultView
+                    key="template-result"
+                    template={aiChosenTemplate}
+                    templateReason={templateReason}
+                    activeTemplate={activeTemplate}
+                    onTemplateSwitch={setActiveTemplate}
+                    onReset={handleReset}
+                  />
+                  {/* ── Vibe-Driven CRUD Editor ──────────────────── */}
+                  <VibeEditBar />
+                </div>
+              </div>
             ) : (
 
               /* ══ DEFAULT DIGITAL RESUME ════════════════════════ */
@@ -727,7 +752,7 @@ export default function ResumePage() {
                         <div className="absolute -inset-[3px] rounded-2xl bg-gradient-to-br from-[#00F0FF]/50 via-[#00F0FF]/20 to-transparent" />
                         <div className="absolute inset-0 animate-[glow-pulse_4s_ease-in-out_infinite] rounded-2xl" />
                         <Image
-                          src={basics.profilePicture}
+                          src={storeProfileImageUrl || basics.profilePicture}
                           alt={basics.name}
                           fill
                           className="relative rounded-2xl object-cover object-top"
@@ -947,11 +972,11 @@ export default function ResumePage() {
 
       {/* ── Print-only layout ────────────────────────────────── */}
       <div id="print-layout-root" className="hidden print:block bg-white text-black p-0 m-0">
-        {isTailored && templateResult ? (
+        {isTailored && resumeData ? (
           /* Use the active template component for print */
           (() => {
             const PrintTemplate = TEMPLATE_REGISTRY[activeTemplate].component;
-            return <PrintTemplate data={templateResult.resumeData} />;
+            return <PrintTemplate data={resumeData} />;
           })()
         ) : (
           /* Default print layout */

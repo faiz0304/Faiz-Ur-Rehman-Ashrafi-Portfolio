@@ -35,7 +35,7 @@ function GlowDivider() {
 }
 
 export function AgenticTemplate({ data }: Props) {
-  const { basics, summary, education, technicalSkills, projects, strengths } = data;
+  const { basics, summary, education, technicalSkills, projects, strengths, profileImageUrl } = data;
 
   const skillGroups = [
     { label: "Languages",  skills: technicalSkills.programmingAndData },
@@ -56,6 +56,16 @@ export function AgenticTemplate({ data }: Props) {
 
         {/* Profile */}
         <div>
+          {profileImageUrl && (
+            <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-2xl border-2 border-[#00F0FF]/30 shadow-[0_0_12px_rgba(0,240,255,0.1)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={profileImageUrl}
+                alt={basics.name}
+                className="h-full w-full object-cover object-top"
+              />
+            </div>
+          )}
           <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#00F0FF]/50">
             System Profile
           </span>

@@ -46,11 +46,14 @@ ${profilePayload}
 ════════════════════════════════════════════════════
 AVAILABLE TEMPLATES
 ════════════════════════════════════════════════════
-- "minimalist"  → Corporate, finance, legal. Clean, white, ATS-safe, single-column.
-- "agentic"     → AI/ML, DevOps, cybersecurity, startups. Dark cyber aesthetic, terminal-style.
-- "modern"      → SWE, product, UX. Two-column, structured, violet/indigo accents.
-- "vibe"        → Creative tech, design-adjacent, seed-stage startups. Bold gradient, high-impact.
-- "academic"    → Research, PhDs, faculty, data science R&D. Formal LaTeX-inspired CV.
+- "minimalist"     → Corporate, finance, legal. Clean, white, ATS-safe, single-column. Optionally renders photo.
+- "photoMinimalist"→ Traditional elegance with a dedicated profile picture on the top-right. Best for corporate/finance/legal roles.
+- "agentic"        → AI/ML, DevOps, cybersecurity, startups. Dark cyber aesthetic, terminal-style. Optionally renders photo in sidebar.
+- "executivePhoto" → Executive, director, or senior leadership roles. Classic formal layout with a prominent photo on the top-left and grid of details.
+- "modern"         → SWE, product, UX. Two-column, structured, violet/indigo accents. Optionally renders photo in sidebar.
+- "creativeModern" → Creative developer, designer, or startup roles. Vibrant gradient highlights with a circular profile picture at the top of the left sidebar.
+- "vibe"           → Creative tech, design-adjacent, seed-stage startups. Bold gradient, high-impact.
+- "academic"       → Research, PhDs, faculty, data science R&D. Formal LaTeX-inspired CV.
 
 ${templateInstruction}
 
@@ -58,7 +61,7 @@ ${templateInstruction}
 YOUR TASK
 ════════════════════════════════════════════════════
 1. Analyze the target job description.
-2. Select the best template (or confirm the user's choice).
+2. Select the best template (or confirm the user's choice) out of the 8 available options.
 3. Rewrite the Professional Summary to directly mirror the JD's vocabulary, tone, and priorities.
 4. Reorder projects to put the most JD-relevant ones first.
 5. Reorder technicalSkills arrays to highlight the most JD-relevant skills first.
@@ -73,7 +76,7 @@ RULE 3 — Output Format: Return ONLY a single valid JSON object. No markdown. N
 RULE 4 — JSON Schema: Your output MUST exactly match this shape:
 
 {
-  "template": "<one of: minimalist | agentic | modern | vibe | academic>",
+  "template": "<one of: minimalist | photoMinimalist | agentic | executivePhoto | modern | creativeModern | vibe | academic>",
   "templateReason": "<1-2 sentences: why this template is the optimal choice for this specific job>",
   "resumeData": {
     "basics": { "name": "...", "title": "...", "email": "...", "linkedin": "...", "github": "...", "location": "...", "profilePicture": "..." },
@@ -101,6 +104,10 @@ RULE 4 — JSON Schema: Your output MUST exactly match this shape:
     "continuousLearning": [...]
   }
 }
+
+RULE 5 — Fallback Layout: If the user hasn't provided a profile image, the layout must adjust gracefully so that content shifts to fill any gaps.
+RULE 6 — Nullability: For deletions, use an empty array [] not null.
+RULE 7 — Selection Set: When picking the best template, pick strictly from the 8 available options listed above.
 `.trim();
 }
 

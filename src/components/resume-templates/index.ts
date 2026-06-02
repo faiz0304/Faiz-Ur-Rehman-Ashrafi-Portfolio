@@ -62,16 +62,28 @@ export interface ResumeData {
   projects: ProjectEntry[];
   strengths: StrengthEntry[];
   continuousLearning: string[];
+  profileImageUrl?: string;
 }
 
 // ─── Template ID Union ────────────────────────────────────────────────────────
 
-export type TemplateId = "minimalist" | "agentic" | "modern" | "vibe" | "academic";
+export type TemplateId =
+  | "minimalist"
+  | "photoMinimalist"
+  | "agentic"
+  | "executivePhoto"
+  | "modern"
+  | "creativeModern"
+  | "vibe"
+  | "academic";
 
 export const TEMPLATE_IDS: TemplateId[] = [
   "minimalist",
+  "photoMinimalist",
   "agentic",
+  "executivePhoto",
   "modern",
+  "creativeModern",
   "vibe",
   "academic",
 ];
@@ -92,8 +104,11 @@ export interface TemplateRegistryEntry {
 // Using dynamic component references — each template file exports a named fn.
 
 import { MinimalistTemplate } from "./Minimalist";
+import { PhotoMinimalistTemplate } from "./PhotoMinimalist";
 import { AgenticTemplate }    from "./Agentic";
+import { ExecutivePhotoTemplate } from "./ExecutivePhoto";
 import { ModernTemplate }     from "./Modern";
+import { CreativeModernTemplate } from "./CreativeModern";
 import { VibeTemplate }       from "./Vibe";
 import { AcademicTemplate }   from "./Academic";
 
@@ -109,6 +124,15 @@ export const TEMPLATE_REGISTRY: Record<TemplateId, TemplateRegistryEntry> = {
     previewStyle: "light",
     component: MinimalistTemplate,
   },
+  photoMinimalist: {
+    id: "photoMinimalist",
+    label: "Photo Minimalist",
+    tagline: "Traditional elegance with photo",
+    bestFor: "Corporate · Consulting · Legal",
+    accentColor: "#4B5563",
+    previewStyle: "light",
+    component: PhotoMinimalistTemplate,
+  },
   agentic: {
     id: "agentic",
     label: "Agentic",
@@ -118,6 +142,15 @@ export const TEMPLATE_REGISTRY: Record<TemplateId, TemplateRegistryEntry> = {
     previewStyle: "dark",
     component: AgenticTemplate,
   },
+  executivePhoto: {
+    id: "executivePhoto",
+    label: "Executive Photo",
+    tagline: "Elite formal leadership layout",
+    bestFor: "Executive · Director · Manager",
+    accentColor: "#1E3A8A",
+    previewStyle: "light",
+    component: ExecutivePhotoTemplate,
+  },
   modern: {
     id: "modern",
     label: "Modern",
@@ -126,6 +159,15 @@ export const TEMPLATE_REGISTRY: Record<TemplateId, TemplateRegistryEntry> = {
     accentColor: "#7C3AED",
     previewStyle: "split",
     component: ModernTemplate,
+  },
+  creativeModern: {
+    id: "creativeModern",
+    label: "Creative Modern",
+    tagline: "Vibrant visual portfolio layout",
+    bestFor: "Designer · Product · Tech",
+    accentColor: "#EC4899",
+    previewStyle: "split",
+    component: CreativeModernTemplate,
   },
   vibe: {
     id: "vibe",
